@@ -298,7 +298,7 @@ const Grid_Patch = defs.Grid_Patch =
 
         static sample_array(array, ratio) {
             // Optional but sometimes useful as a next row or column operation. In a given array
-            // of points, intepolate the pair of points that our progress ratio falls between.
+            // of points, interpolate the pair of points that our progress ratio falls between.
             const frac = ratio * (array.length - 1), alpha = frac - Math.floor(frac);
             return array[Math.floor(frac)].mix(array[Math.ceil(frac)], alpha);
         }
