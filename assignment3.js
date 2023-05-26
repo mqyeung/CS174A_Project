@@ -5,9 +5,10 @@ const {
 } = tiny;
 
 import {generatePerlinNoise, elementwiseMultiply, elementwiseAddition, scalarMultiply, scalarAdd, Array_Grid_Patch} from './procgen.js';
+import {Ship} from './obj-file.js';
 
-class Ship {
-    constructor(model,material) {
+class ShipPhysics {
+    constructor(model) {
 
         //HYPERPARAMETERS
 
@@ -30,7 +31,6 @@ class Ship {
         //update: probably necessary to prevent glitches when they fuck with it. maybe start blending after a certain angle?
 
         this.model = model; //model (external)
-        this.material = material; //material (external)
     }
     controlTick(acc,turn,dt) {
         //skip the update if velocity's too far from facing
@@ -78,7 +78,7 @@ class Ship {
         //spin!
         //this.facing = vec3(Math.cos(2 * Math.PI * program_state.animation_time / 5000),0,Math.sin(2 * Math.PI * program_state.animation_time / 5000));
     }
-    draw(context,program_state) {
+    draw(context, program_state) {
         //console.log(this.pos[0]);
         let model_transform = Mat4.translation(...this.pos); //translate
 
@@ -87,7 +87,7 @@ class Ship {
         model_transform = model_transform.times(cob); //and multiply
         console.log(cob.to_string());
 
-        this.model.draw(context, program_state,model_transform,this.material);
+        this.model.display(context, program_state, model_transform);
     }
 
     get_camera(){
@@ -122,9 +122,15 @@ export class Assignment3 extends Scene {
             torus: new defs.Torus(15, 15),
             torus2: new defs.Torus(3, 32),
             sphere_4: new defs.Subdivision_Sphere(4),
-            plane: new Array_Grid_Patch(elementwiseAddition(generatePerlinNoise(20,20,5), generatePerlinNoise(20,20,2, 0.5)))
-            // plane2: new Array_Grid_Patch(generatePerlinNoise(20,20,2))
+            plane: new Array_Grid_Patch(elementwiseAddition(generatePerlinNoise(20,20,5), generatePerlinNoise(20,20,2, 0.5))),
+            triangle: new defs.Triangle(),
+            cube: new defs.Cube(),
+            // plane2: new Array_Grid_Patch(generatePerlinNoise(20,20,2)),
+            item: new defs.Item(4, 10),
+            player: new defs.Player(),
         };
+
+        this.ship = new Ship();
 
         // *** Materials
         this.materials = {
@@ -133,7 +139,19 @@ export class Assignment3 extends Scene {
             max_ambient: new Material(new defs.Phong_Shader(),
                 {ambient: 1, diffusivity: 0, specularity: 0, color: hex_color("#ffffff")}),
             diffuse_only: new Material(new defs.Phong_Shader(),
-                {ambient: 0, diffusivity: 0.8, specularity: 0, color: color(0.3, 0.3, 0.3, 1)})
+                {ambient: 0, diffusivity: 0.8, specularity: 0, color: color(0.3, 0.3, 0.3, 1)}),
+            item: new Material(new defs.Phong_Shader(),
+                {ambient: 0.3, diffusivity: 0.8, specularity: 0.8, color: hex_color("#950706")}),
+            player: new Material(new defs.Phong_Shader(),
+                {ambient: 0.5, diffusivity: 0.3, specularity: 0.3, color: hex_color("#ffffff")}),
+            ship_body: new Material(new defs.Phong_Shader(),
+                {ambient: 0.5, diffusivity: 0.3, specularity: 0.3, color: hex_color("#950706")}),
+            ship_wings: new Material(new defs.Phong_Shader(),
+                {ambient: 0.5, diffusivity: 0.3, specularity: 0.3, color: hex_color("#E3242B")}),
+            ship_fin: new Material(new defs.Phong_Shader(),
+                {ambient: 0.5, diffusivity: 0.3, specularity: 0.3, color: hex_color("#ffffff")}),
+            ship_tail: new Material(new defs.Phong_Shader(),
+                {ambient: 0.5, diffusivity: 0.3, specularity: 0.3, color: hex_color("#ffffff")}),
         }
 
         this.shiplock = true;
@@ -142,7 +160,7 @@ export class Assignment3 extends Scene {
         this.paused = false;
         this.waspaused = false;
         this.turn = vec3(0,0,0); //we only use the first two, i-j style
-        this.s = new Ship(this.shapes.torus,this.materials.test)
+        this.s = new ShipPhysics(this.ship);
         this.initial_camera_location = Mat4.look_at(vec3(0, 10, 20), vec3(0, 0, 0), vec3(0, 1, 0));
     }
 
@@ -251,13 +269,20 @@ export class Assignment3 extends Scene {
 
         // TODO:  Fill in matrix operations and drawing code to draw the solar system scene (Requirements 3 and 4)
 
-        this.s.draw(context,program_state);
+        this.s.draw(context, program_state);
         // this.shapes.sphere_4.draw(context, program_state, sun_tx, this.materials.max_ambient.override({color: sun_color}))
+
+        // let model_transform = Mat4.translation(10, 10, 10)
+        //     .times(Mat4.rotation(90, 1, 0, 0))
+        //     .times(Mat4.identity());
+        // this.shapes.item.draw(context, program_state, model_transform, this.materials.item);
+        //
+        // model_transform = Mat4.translation(3, 3, 3).times(model_transform);
+        //
+        // this.ship.display(context, program_state, model_transform);
 
         this.shapes.plane.draw(context, program_state, Mat4.scale(20,20,10), this.materials.diffuse_only.override({color:white_color}))
         // this.shapes.plane2.draw(context, program_state, Mat4.scale(10,10,10), this.materials.diffuse_only.override({color:white_color}))
-
-
     }
 }
 

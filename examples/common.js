@@ -393,6 +393,15 @@ const Rounded_Closed_Cone = defs.Rounded_Closed_Cone =
         }
     }
 
+const Item = defs.Item =
+    class Item extends Surface_Of_Revolution {
+        // An alternative without two separate sections
+        constructor(rows, columns, texture_range) {
+            super(rows, columns, [vec3(0, 0, 1), vec3(1, 0, -1), vec3(0, 0, -1.5)], texture_range);
+            Regular_2D_Polygon.insert_transformed_copy_into(this, [1, Math.floor(columns/2)], Mat4.translation(0, 0, -1));
+        }
+    }
+
 const Capped_Cylinder = defs.Capped_Cylinder =
     class Capped_Cylinder extends Shape {
         // Combine a tube and two regular polygons to make a closed cylinder.
@@ -1016,5 +1025,18 @@ const Program_State_Viewer = defs.Program_State_Viewer =
 
         display(context, program_state) {
             this.program_state = program_state;
+        }
+    }
+
+const Player = defs.Player =
+    class Player extends Shape {
+        constructor() {
+            super("position", "normal", "texture_coord");
+            // CREATE TRAPEZOID LIKE ASSIGNMENT 2
+            Cube.insert_transformed_copy_into(this, [1], Mat4.scale(2, 1, 1));
+            Cube.insert_transformed_copy_into(this, [1], Mat4.translation(-2, 0, 0).times(Mat4.scale(0.5, 0.5, 0.5)));
+            Triangle.insert_transformed_copy_into(this, [1], Mat4.translation(-1, 1, 0).times(Mat4.scale(3, 2, 2)));
+            Triangle.insert_transformed_copy_into(this, [1], Mat4.translation(-1, -1, 0).times(Mat4.scale(3, -2, 2)));
+            Triangle.insert_transformed_copy_into(this, [1], Mat4.translation(-1, 0, -1).times(Mat4.scale(2, 1, 1)).times(Mat4.rotation(-Math.PI/2, 1, 0, 0)));
         }
     }
