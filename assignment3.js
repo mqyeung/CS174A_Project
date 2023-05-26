@@ -6,6 +6,96 @@ const {
 
 import {generatePerlinNoise, elementwiseMultiply, elementwiseAddition, scalarMultiply, scalarAdd, Array_Grid_Patch} from './procgen.js';
 
+class Ship {
+    constructor(model,material) {
+
+        //HYPERPARAMETERS
+
+        this.pos = vec3(0,20,20); //initial position
+        this.velocity = vec3(0,0,0); //initial velocity
+        this.facing = vec3(1,0,0); //initial direction the ship's facing
+        this.up = vec3(0,1,0); //initial up (to make sure we turn the right way when pressing up
+        this.third = vec3(0,0,1); //the third axis here (just so we don't recompute)
+        this.accel = 0; //initial acceleration
+
+        this.daccel = 20; //change in acceleration per second of held controls
+        this.dturn = Math.PI / 2; //radial turning per second of held controls
+
+        this.ag = 0; //acceleration due to gravity. haven't tried messing with this
+        this.drag = .1; //drag, necessary for good turning. .1 has worked well
+        this.camdist = 15; //render distance of camera in units
+        this.blendfactor = .7; //number between -1 and 1, ideally close to 1. cos(facing-velocity)<blendfactor induces bleed.
+
+        //consider blending velocity into current facing? kind of mean bc it makes it very hard to turn...
+        //update: probably necessary to prevent glitches when they fuck with it. maybe start blending after a certain angle?
+
+        this.model = model; //model (external)
+        this.material = material; //material (external)
+    }
+    controlTick(acc,turn,dt) {
+        //skip the update if velocity's too far from facing
+        // if(this.velocity.norm() > 1){
+        //     let component = this.facing.dot(this.velocity) / this.velocity.norm();
+        //     if(component < this.blendfactor) {
+        //         //start bleeding stuff in
+        //         this.facing = this.facing.times(this.blendfactor * dt) + this.velocity.times((1 - this.blendfactor) * dt)
+        //     }
+        // }
+        if(acc != 0){
+            this.accel += acc * this.daccel * dt;
+        }
+        if(turn[0] != 0){ //turning towards the axis orthogonal to up and facing
+
+            //shift the angle slightly
+            this.facing = this.facing.times(Math.cos(turn[0] * this.dturn * dt)).plus(this.third.times(Math.sin(turn[0] * this.dturn * dt)));
+            //recompute third
+            this.third = this.facing.cross(this.up);
+
+        }
+        if(turn[1] != 0){ //turning towards up (todo)
+            //shift the angle slightly
+            this.facing = this.facing.times(Math.cos(turn[1] * this.dturn * dt)).plus(this.up.times(Math.sin(turn[1] * this.dturn * dt)));
+            //recompute up
+            this.up = this.third.cross(this.facing); //this order's important
+        }
+    }
+    tick(dt,program_state){
+
+        //update velocity:
+
+        //drag
+        this.velocity = this.velocity.minus(this.velocity.times(this.drag * dt));
+
+        //engine acceleration
+        this.velocity = this.velocity.plus(this.facing.times(-1 * this.accel * dt));
+
+        //gravity
+        this.velocity[1] -= dt * this.ag;
+
+        this.pos = this.pos.plus(this.velocity.times(dt));
+
+
+        //spin!
+        //this.facing = vec3(Math.cos(2 * Math.PI * program_state.animation_time / 5000),0,Math.sin(2 * Math.PI * program_state.animation_time / 5000));
+    }
+    draw(context,program_state) {
+        //console.log(this.pos[0]);
+        let model_transform = Mat4.translation(...this.pos); //translate
+
+        //manually construct change of basis matrix
+        let cob = Mat4.of(vec4(...this.third,0),vec4(...this.facing,0),vec4(...this.up,0),vec4(0,0,0,1));
+        model_transform = model_transform.times(cob); //and multiply
+        console.log(cob.to_string());
+
+        this.model.draw(context, program_state,model_transform,this.material);
+    }
+
+    get_camera(){
+        return Mat4.look_at(this.facing.times(this.camdist).plus(this.pos),this.pos,this.up);
+    }
+
+}
+
 export class Assignment3 extends Scene {
     constructor() {
         // constructor(): Scenes begin by populating initial values like the Shapes and Materials they'll need.
@@ -27,7 +117,6 @@ export class Assignment3 extends Scene {
             [0.199471, 0.328798, 0.483941, 0.581759, 0.581759, 0.483941]
         ];
 
-
         // At the beginning of our program, load one of each of these shape definitions onto the GPU.
         this.shapes = {
             torus: new defs.Torus(15, 15),
@@ -36,8 +125,6 @@ export class Assignment3 extends Scene {
             plane: new Array_Grid_Patch(elementwiseAddition(generatePerlinNoise(20,20,5), generatePerlinNoise(20,20,2, 0.5)))
             // plane2: new Array_Grid_Patch(generatePerlinNoise(20,20,2))
         };
-
-
 
         // *** Materials
         this.materials = {
@@ -49,20 +136,42 @@ export class Assignment3 extends Scene {
                 {ambient: 0, diffusivity: 0.8, specularity: 0, color: color(0.3, 0.3, 0.3, 1)})
         }
 
+        this.shiplock = true;
+        this.t = 0;
+        this.accel = 0;
+        this.paused = false;
+        this.waspaused = false;
+        this.turn = vec3(0,0,0); //we only use the first two, i-j style
+        this.s = new Ship(this.shapes.torus,this.materials.test)
         this.initial_camera_location = Mat4.look_at(vec3(0, 10, 20), vec3(0, 0, 0), vec3(0, 1, 0));
     }
 
     make_control_panel() {
         // Draw the scene's buttons, setup their actions and keyboard shortcuts, and monitor live measurements.
-        this.key_triggered_button("View solar system", ["Control", "0"], () => this.attached = () => null);
+        this.key_triggered_button("Toggle camera lock on ship", ["Control", "0"], () => this.shiplock = !this.shiplock);
+        this.key_triggered_button("Teleport ship to starting pos", ["Control", "1"], () => this.tp = true);
+
+        this.live_string(box => box.textContent = "- Ship position: " + this.s.pos[0].toFixed(2) + ", " + this.s.pos[1].toFixed(2)
+            + ", " + this.s.pos[2].toFixed(2));
         this.new_line();
-        this.key_triggered_button("Attach to planet 1", ["Control", "1"], () => this.attached = () => this.planet_1);
-        this.key_triggered_button("Attach to planet 2", ["Control", "2"], () => this.attached = () => this.planet_2);
+        this.live_string(box => box.textContent = "- Ship velocity: " + this.s.velocity[0].toFixed(2) + ", " + this.s.velocity[1].toFixed(2)
+            + ", " + this.s.velocity[2].toFixed(2));
         this.new_line();
-        this.key_triggered_button("Attach to planet 3", ["Control", "3"], () => this.attached = () => this.planet_3);
-        this.key_triggered_button("Attach to planet 4", ["Control", "4"], () => this.attached = () => this.planet_4);
+        this.live_string(box => box.textContent = "- Ship orientation: " + this.s.facing[0].toFixed(2) + ", " + this.s.facing[1].toFixed(2)
+            + ", " + this.s.facing[2].toFixed(2));
         this.new_line();
-        this.key_triggered_button("Attach to moon", ["Control", "m"], () => this.attached = () => this.moon);
+        this.live_string(box => box.textContent = "- Ship acceleration: " + this.s.accel.toFixed(2));
+        this.new_line();
+        this.key_triggered_button("Accelerate", ["e"], () => this.accel = 1, undefined, () => this.accel = 0);
+        this.key_triggered_button("Decelerate", ["r"], () => this.accel = -1, undefined, () => this.accel = 0);
+        this.new_line();
+        this.key_triggered_button("Turn Left", ["j"], () => this.turn[0] = -1, undefined, () => this.turn[0] = 0);
+        this.key_triggered_button("Turn Right", ["l"], () => this.turn[0] = 1, undefined, () => this.turn[0] = 0);
+        this.key_triggered_button("Turn Up", ["i"], () => this.turn[1] = -1, undefined, () => this.turn[1] = 0);
+        this.key_triggered_button("Turn Down", ["k"], () => this.turn[1] = 1, undefined, () => this.turn[1] = 0);
+        this.new_line();
+        this.key_triggered_button("Pause", ["t"], () => this.paused = !this.paused);
+
     }
 
     mat4_difference(matrix1, matrix2) {
@@ -92,6 +201,35 @@ export class Assignment3 extends Scene {
             // Define the global camera and projection matrices, which are stored in program_state.
             program_state.set_camera(this.initial_camera_location);
         }
+        if(this.tp){
+            this.tp = false;
+            this.s.pos = vec3(0,20,20);
+            this.s.velocity = vec3(0,0,0);
+            this.s.accel = 0;
+            this.s.facing = vec3(1,0,0);
+            this.s.up = vec3(0,1,0);
+            this.s.third = vec3(0,0,1);
+        }
+        if(this.paused){
+            this.waspaused = true;
+        } else {
+
+            let dt = 0;
+            if(this.waspaused) {
+                //coming off of pause so just burn off the spare time (dt==0)
+                this.waspaused = false;
+            } else {
+                //set dt properly
+                dt = (program_state.animation_time - this.t ) / 1000;
+            }
+            this.t = program_state.animation_time;
+            this.s.controlTick(this.accel,this.turn,dt);
+            this.s.tick(dt,program_state);
+        }
+        if(this.shiplock){
+            let target = this.s.get_camera();
+            program_state.set_camera(target);//
+        }
 
         program_state.projection_transform = Mat4.perspective(
             Math.PI / 4, context.width / context.height, .1, 1000);
@@ -113,10 +251,10 @@ export class Assignment3 extends Scene {
 
         // TODO:  Fill in matrix operations and drawing code to draw the solar system scene (Requirements 3 and 4)
 
-        this.shapes.torus.draw(context, program_state, Mat4.identity(), this.materials.test.override({color: white_color}));
+        this.s.draw(context,program_state);
         // this.shapes.sphere_4.draw(context, program_state, sun_tx, this.materials.max_ambient.override({color: sun_color}))
 
-        this.shapes.plane.draw(context, program_state, Mat4.scale(10,10,10), this.materials.diffuse_only.override({color:white_color}))
+        this.shapes.plane.draw(context, program_state, Mat4.scale(20,20,10), this.materials.diffuse_only.override({color:white_color}))
         // this.shapes.plane2.draw(context, program_state, Mat4.scale(10,10,10), this.materials.diffuse_only.override({color:white_color}))
 
 

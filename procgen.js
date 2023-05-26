@@ -73,10 +73,10 @@ export function generatePerlinNoise(width, height, scale, z_scale = 1) {
 // Elementwise multiplication of two 2D arrays
 export function elementwiseMultiply(arr1, arr2) {
     if (arr1.length !== arr2.length || arr1[0].length !== arr2[0].length) {
-        console.log(arr1.length.toString())
-        console.log(arr2.length.toString())
-        console.log(arr1[0].length.toString())
-        console.log(arr2[0].length.toString())
+        //console.log(arr1.length.toString())
+        //console.log(arr2.length.toString())
+        //console.log(arr1[0].length.toString())
+        //console.log(arr2[0].length.toString())
         throw new Error("Array dimensions must match for elementwise multiplication.");
     }
 
@@ -94,10 +94,10 @@ export function elementwiseMultiply(arr1, arr2) {
 // Elementwise addition of two 2D arrays
 export function elementwiseAddition(arr1, arr2) {
     if (arr1.length !== arr2.length || arr1[0].length !== arr2[0].length) {
-        console.log(arr1.length.toString())
-        console.log(arr2.length.toString())
-        console.log(arr1[0].length.toString())
-        console.log(arr2[0].length.toString())
+        //console.log(arr1.length.toString())
+        //console.log(arr2.length.toString())
+        //console.log(arr1[0].length.toString())
+        //console.log(arr2[0].length.toString())
         throw new Error("Array dimensions must match for elementwise addition.");
     }
 
@@ -157,7 +157,7 @@ export class Array_Grid_Patch extends Shape {
         for (let r = 0; r <= rows; r++) {
             // From those, use next_column function to generate the remaining points:
             for (let c = 0; c <= columns; c++) {
-                console.log(array.toString())
+                //console.log(array.toString())
                 points[r][c] = vec3(r * scale, array[r][c], c * scale);
 
                 this.arrays.position.push(points[r][c]);
@@ -188,7 +188,7 @@ export class Array_Grid_Patch extends Shape {
                 // Store the normal if it's valid (not NaN or zero length), otherwise use a default:
                 if (normal.every(x => x == x) && normal.norm() > .01) {
                     this.arrays.normal.push(normal.copy().times(-1));  // the -1 is so cursed, no idea why we need it
-                    console.log(normal.toString())
+                    //console.log(normal.toString())
                 }
                 else this.arrays.normal.push(vec3(0, 1, 0));
             }
