@@ -28,7 +28,7 @@ class ShipPhysics {
         this.blendfactor = .7; //number between -1 and 1, ideally close to 1. cos(facing-velocity)<blendfactor induces bleed.
 
         //consider blending velocity into current facing? kind of mean bc it makes it very hard to turn...
-        //update: probably necessary to prevent glitches when they fuck with it. maybe start blending after a certain angle?
+        //update: probably necessary to prevent glitches when people mess around too much. maybe start blending after a certain angle?
 
         this.model = model; //model (external)
     }
@@ -52,12 +52,17 @@ class ShipPhysics {
             this.third = this.facing.cross(this.up);
 
         }
-        if(turn[1] != 0){ //turning towards up (todo)
+        if(turn[1] != 0){ //turning towards up
             //shift the angle slightly
             this.facing = this.facing.times(Math.cos(turn[1] * this.dturn * dt)).plus(this.up.times(Math.sin(turn[1] * this.dturn * dt)));
             //recompute up
             this.up = this.third.cross(this.facing); //this order's important
         }
+
+        //normalize everything (fpoint stuff)
+        this.facing = this.facing.times(1 / this.facing.norm());
+        this.up = this.up.times(1 / this.up.norm());
+        this.third = this.third.times(1 / this.third.norm());
     }
     tick(dt,program_state){
 
@@ -83,7 +88,7 @@ class ShipPhysics {
         let model_transform = Mat4.translation(...this.pos); //translate
 
         //manually construct change of basis matrix
-        let cob = Mat4.of(vec4(...this.third,0),vec4(...this.facing,0),vec4(...this.up,0),vec4(0,0,0,1));
+        let cob = Mat4.of(vec4(...this.facing,0),vec4(...this.third,0),vec4(...this.up,0),vec4(0,0,0,1)).times(Mat4.scale(-1,-1,-1));
         model_transform = model_transform.times(cob); //and multiply
         console.log(cob.to_string());
 
