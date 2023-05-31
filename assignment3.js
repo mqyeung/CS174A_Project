@@ -89,7 +89,7 @@ class ShipPhysics {
 
         //manually construct change of basis matrix
         let cob = Mat4.of(vec4(...this.facing,0),vec4(...this.third,0),vec4(...this.up,0),vec4(0,0,0,1)).times(Mat4.scale(-1,-1,-1));
-        model_transform = model_transform.times(cob); //and multiply
+        model_transform = model_transform.times(Mat4.inverse(cob)); //and multiply
         console.log(cob.to_string());
 
         this.model.display(context, program_state, model_transform);
