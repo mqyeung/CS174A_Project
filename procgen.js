@@ -69,7 +69,7 @@ function perlinNoise(x, y) {
 function fade(t) {
     return t * t * t * (t * (t * 6 - 15) + 10);
 }
-export function generatePerlinNoise(width, height, scale, z_scale = 1) {
+export function generatePerlinNoiseArray(width, height, scale, z_scale = 1) {
     // Initialize the 2D array
     const noiseArray = new Array(height);
     for (let i = 0; i < height; i++) {
@@ -84,6 +84,27 @@ export function generatePerlinNoise(width, height, scale, z_scale = 1) {
         }
     }
 
+    return noiseArray;
+}
+
+export function getTerrainNoise(x, y) {
+    let scale = 5, z_scale = 20
+    let small_scale = 2, small_z_scale = 0.5
+
+    return z_scale * perlinNoise(x / scale, y / scale) + small_z_scale * perlinNoise(x/small_scale,  y/small_scale)
+}
+
+export function getTerrainNoiseArray(subdivisions, output_size, z_scale) {
+    const noiseArray = new Array(subdivisions);
+    for (let i = 0; i < subdivisions; i++) {
+        noiseArray[i] = new Array(subdivisions);
+    }
+
+    for (let y = 0; y < subdivisions; y++) {
+        for (let x = 0; x < subdivisions; x++) {
+            noiseArray[y][x] = getTerrainNoise(x*output_size/subdivisions,y*output_size/subdivisions)
+        }
+    }
     return noiseArray;
 }
 
@@ -160,11 +181,11 @@ export class Array_Grid_Patch extends Shape {
     // A grid of rows and columns you can distort. A tesselation of triangles connects the
     // points, generated with a certain predictable pattern of indices.  Two callbacks
     // allow you to dynamically define how to reach the next row or column.
-    constructor(array) {
+    constructor(array, output_size) {
         let rows = array.length - 1
         let columns = array[0].length - 1
         let texture_coord_range = [[0, rows], [0, columns]]
-        let scale = 0.1
+        let scale = output_size / rows
 
         super("position", "normal", "texture_coord");
         let points = [];

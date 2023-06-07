@@ -4,7 +4,15 @@ const {
     Vector, Vector3, vec, vec3, vec4, color, hex_color, Shader, Matrix, Mat4, Light, Shape, Material, Scene,
 } = tiny;
 
-import {generatePerlinNoise, elementwiseMultiply, elementwiseAddition, scalarMultiply, scalarAdd, Array_Grid_Patch} from './procgen.js';
+import {
+    generatePerlinNoiseArray,
+    elementwiseMultiply,
+    elementwiseAddition,
+    scalarMultiply,
+    scalarAdd,
+    Array_Grid_Patch,
+    getTerrainNoiseArray, getTerrainNoise
+} from './procgen.js';
 import {Terrain_Shader} from "./terrain_shader.js";
 import {Ship} from './obj-file.js';
 
@@ -109,7 +117,7 @@ class ShipPhysics {
     }
 
     getHeight(){
-        return this.pos[1];
+        return this.pos[1] - getTerrainNoise(this.pos[0], this.pos[2]);
     }
     point_management(dt){
         let h = this.height;
@@ -204,7 +212,7 @@ export class Assignment3 extends Scene {
             torus: new defs.Torus(15, 15),
             torus2: new defs.Torus(3, 32),
             sphere_4: new defs.Subdivision_Sphere(4),
-            plane: new Array_Grid_Patch(elementwiseAddition(generatePerlinNoise(20,20,5), generatePerlinNoise(20,20,2, 0.5))),
+            plane: new Array_Grid_Patch(getTerrainNoiseArray(100,20), 20),
             triangle: new defs.Triangle(),
             cube: new defs.Cube(),
             // plane2: new Array_Grid_Patch(generatePerlinNoise(20,20,2)),
@@ -383,7 +391,7 @@ export class Assignment3 extends Scene {
         //
         // this.ship.display(context, program_state, model_transform);
 
-        this.shapes.plane.draw(context, program_state, Mat4.scale(20,20,20), this.materials.terrain_material.override({color:white_color}))
+        this.shapes.plane.draw(context, program_state, Mat4.identity(), this.materials.terrain_material.override({color:white_color}))
         // this.shapes.plane2.draw(context, program_state, Mat4.scale(10,10,10), this.materials.diffuse_only.override({color:white_color}))
     }
 }
