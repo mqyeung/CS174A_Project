@@ -15,6 +15,7 @@ class ShipPhysics {
         this.pos = vec3(0,20,20); //initial position
         this.velocity = vec3(0,0,0); //initial velocity
         this.facing = vec3(1,0,0); //initial direction the ship's facing
+        this.height = 10;
         this.up = vec3(0,1,0); //initial up (to make sure we turn the right way when pressing up
         this.third = vec3(0,0,1); //the third axis here (just so we don't recompute)
         this.accel = 0; //initial acceleration
@@ -28,6 +29,15 @@ class ShipPhysics {
         this.wingdrag = .9; //increased drag along the axis perpendicular to the wings
         this.camdist = 15; //render distance of camera in units
         this.blendfactor = .7; //number between -1 and 1, ideally close to 1. cos(facing-velocity)<blendfactor induces bleed.
+
+        this.startingManeuverHeight = 10; //the point at which a maneuver starts
+        this.maneuverPoints = 0; //the number of points in the current maneuver
+        this.totalPoints = 0; //the number of points across all maneuvers this run
+        this.bestManeuver = 0; //the best maneuver
+        this.maneuverTime = 0; //the time this maneuver started
+        this.bestTime = 0;
+
+        this.structuralcoherence = true;
 
         //consider blending velocity into current facing? kind of mean bc it makes it very hard to turn...
         //update: probably necessary to prevent glitches when people mess around too much. maybe start blending after a certain angle?
@@ -96,6 +106,33 @@ class ShipPhysics {
         //spin!
         //this.facing = vec3(Math.cos(2 * Math.PI * program_state.animation_time / 5000),0,Math.sin(2 * Math.PI * program_state.animation_time / 5000));
     }
+
+    getHeight(){
+        return this.pos[1];
+    }
+    point_management(dt){
+        let h = this.height;
+        if(h < 0){
+            console.log("negative height");
+            return;
+        }
+        if(h > this.startingManeuverHeight && this.maneuverTime > .1){
+            //end maneuver
+            let pps = this.maneuverPoints / this.maneuverTime;
+            if(pps > this.bestManeuver){
+                this.bestManeuver = pps;
+                this.bestTime = this.maneuverTime;
+                console.log("new record!");
+            }
+            this.maneuverPoints = 0;
+            this.maneuverTime = 0;
+
+        } else if(h < this.startingManeuverHeight){
+            //we are in a maneuver
+            this.maneuverTime += dt;
+            this.maneuverPoints += dt / h * 100;
+        }
+    }
     draw(context, program_state) {
         //console.log(this.pos[0]);
         let model_transform = Mat4.translation(...this.pos); //translate
@@ -134,7 +171,8 @@ class ShipPhysics {
             v2 = rot.times(v2);
             v1 = vu;
         }
-        return Mat4.look_at(v1.times(this.camdist).plus(this.pos),this.pos,v2);
+        //let dpos = this.pos.plus(this.up.times(.5))
+        return Mat4.look_at(v1.times(this.camdist).plus(this.up.times(4)).plus(this.pos),this.pos,v2);
     }
 
 }
@@ -223,6 +261,14 @@ export class Assignment3 extends Scene {
         this.new_line();
         this.live_string(box => box.textContent = "- Ship acceleration: " + this.s.accel.toFixed(2));
         this.new_line();
+        this.live_string(box => box.textContent = "- Ship height: " + this.s.height.toFixed(2));
+        this.new_line();
+        this.live_string(box => box.textContent = "- In maneuver for: " + this.s.maneuverTime.toFixed(2) + " seconds.");
+        this.new_line();
+        this.live_string(box => box.textContent = "- Best maneuver: " + this.s.bestManeuver.toFixed(2) + " points/sec for " + this.s.bestTime.toFixed(2) + " seconds.");
+        this.new_line();
+        this.live_string(box => box.textContent = "You are: " + (this.s.structuralcoherence ? "structurally capable" : "blown to smithereens"));
+        this.new_line();
         this.key_triggered_button("Accelerate", [" "], () => this.accel = 1, undefined, () => this.accel = 0);
         this.key_triggered_button("Decelerate", ["o"], () => this.accel = -1, undefined, () => this.accel = 0);
         this.new_line();
@@ -264,16 +310,23 @@ export class Assignment3 extends Scene {
             // Define the global camera and projection matrices, which are stored in program_state.
         //    program_state.set_camera(this.initial_camera_location);
         //}
+        this.s.height = this.s.getHeight();
+        if(this.s.height < 0) this.s.structuralcoherence = false;
         if(this.tp){
             this.tp = false;
+            this.s.structuralcoherence = true;
             this.s.pos = vec3(0,20,20);
             this.s.velocity = vec3(0,0,0);
             this.s.accel = 0;
             this.s.facing = vec3(1,0,0);
             this.s.up = vec3(0,1,0);
             this.s.third = vec3(0,0,1);
+            this.s.bestTime = 0;
+            this.s.bestManeuver = 0;
+            this.s.maneuverTime = 0;
+            this.s.maneuverPoints = 0;
         }
-        if(this.paused){
+        if(this.paused || !this.s.structuralcoherence){
             this.waspaused = true;
         } else {
 
@@ -288,6 +341,7 @@ export class Assignment3 extends Scene {
             this.t = program_state.animation_time;
             this.s.controlTick(this.accel,this.turn,dt);
             this.s.tick(dt,program_state);
+            this.s.point_management(dt);
         }
         if(this.shiplock){
             let target = this.s.get_camera();
