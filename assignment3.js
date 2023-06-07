@@ -5,6 +5,7 @@ const {
 } = tiny;
 
 import {generatePerlinNoise, elementwiseMultiply, elementwiseAddition, scalarMultiply, scalarAdd, Array_Grid_Patch} from './procgen.js';
+import {Terrain_Shader} from "./terrain_shader.js";
 import {Ship} from './obj-file.js';
 
 class ShipPhysics {
@@ -221,6 +222,8 @@ export class Assignment3 extends Scene {
                 {ambient: 1, diffusivity: 0, specularity: 0, color: hex_color("#ffffff")}),
             diffuse_only: new Material(new defs.Phong_Shader(),
                 {ambient: 0, diffusivity: 0.8, specularity: 0, color: color(0.3, 0.3, 0.3, 1)}),
+            terrain_material: new Material(new Terrain_Shader(),
+                {ambient: 0, diffusivity: 0.8, specularity: 0, color: color(0.3,0.3,0.3,1)}),
             item: new Material(new defs.Phong_Shader(),
                 {ambient: 0.3, diffusivity: 0.8, specularity: 0.8, color: hex_color("#950706")}),
             player: new Material(new defs.Phong_Shader(),
@@ -380,7 +383,7 @@ export class Assignment3 extends Scene {
         //
         // this.ship.display(context, program_state, model_transform);
 
-        this.shapes.plane.draw(context, program_state, Mat4.scale(20,20,10), this.materials.diffuse_only.override({color:white_color}))
+        this.shapes.plane.draw(context, program_state, Mat4.scale(20,20,20), this.materials.terrain_material.override({color:white_color}))
         // this.shapes.plane2.draw(context, program_state, Mat4.scale(10,10,10), this.materials.diffuse_only.override({color:white_color}))
     }
 }
