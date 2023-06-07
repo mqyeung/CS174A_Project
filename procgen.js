@@ -4,59 +4,76 @@ const {
     Vector, Vector3, vec, vec3, vec4, color, hex_color, Shader, Matrix, Mat4, Light, Shape, Material, Scene,
 } = tiny;
 
-// random garbage perlin noise implementation from the interwebs
+// xhash 2D rng
+function rand(x, y) {
+    /* mix around the bits in x: */
+    x = x * 3266489917 + 374761393;
+    x = (x << 17) | (x >> 15);
+
+    /* mix around the bits in y and mix those into x: */
+    x += y * 3266489917;
+
+    /* Give x a good stir: */
+    x *= 668265263;
+    x ^= x >> 15;
+    x *= 2246822519;
+    x ^= x >> 13;
+    x *= 3266489917;
+    x ^= x >> 16;
+
+    /* trim the result and scale it to a float in [0,1): */
+    return (x & 0x00ffffff) * (1.0 / 0x1000000);
+}
+
+// random perlin noise implementation from the interwebs, many edits to make it continuous
+function get_gradient(i, j) {
+    return {x: rand(i,j) * 2 - 1, y: rand(i,j) * 2 - 1}
+}
+
+// Interpolation function
+function lerp(a, b, t) {
+    return (1 - t) * a + t * b;
+}
+
+// Perlin noise function
+function perlinNoise(x, y) {
+    const x0 = Math.floor(x);
+    const x1 = x0 + 1;
+    const y0 = Math.floor(y);
+    const y1 = y0 + 1;
+
+    const vec00 = get_gradient(x0, y0);
+    const vec01 = get_gradient(x0, y1);
+    const vec10 = get_gradient(x1, y0);
+    const vec11 = get_gradient(x1, y1);
+
+    const dx = x - x0;
+    const dy = y - y0;
+
+    const dot00 = vec00.x * dx + vec00.y * dy;
+    const dot01 = vec01.x * dx + vec01.y * (dy - 1);
+    const dot10 = vec10.x * (dx - 1) + vec10.y * dy;
+    const dot11 = vec11.x * (dx - 1) + vec11.y * (dy - 1);
+
+    const u = fade(dx);
+    const v = fade(dy);
+
+    const lerpedX0 = lerp(dot00, dot10, u);
+    const lerpedX1 = lerp(dot01, dot11, u);
+    const lerpedY = lerp(lerpedX0, lerpedX1, v);
+
+    return (lerpedY + 1) / 2;
+}
+
+// Fade function for interpolation
+function fade(t) {
+    return t * t * t * (t * (t * 6 - 15) + 10);
+}
 export function generatePerlinNoise(width, height, scale, z_scale = 1) {
     // Initialize the 2D array
     const noiseArray = new Array(height);
     for (let i = 0; i < height; i++) {
         noiseArray[i] = new Array(width);
-    }
-
-    // Generate random gradient vectors
-    const gradients = new Array(width * height);
-    for (let i = 0; i < gradients.length; i++) {
-        const gradient = { x: Math.random() * 2 - 1, y: Math.random() * 2 - 1 };
-        gradients[i] = gradient;
-    }
-
-    // Interpolation function
-    function lerp(a, b, t) {
-        return (1 - t) * a + t * b;
-    }
-
-    // Perlin noise function
-    function perlinNoise(x, y) {
-        const x0 = Math.floor(x);
-        const x1 = x0 + 1;
-        const y0 = Math.floor(y);
-        const y1 = y0 + 1;
-
-        const vec00 = gradients[y0 * width + x0];
-        const vec01 = gradients[y1 * width + x0];
-        const vec10 = gradients[y0 * width + x1];
-        const vec11 = gradients[y1 * width + x1];
-
-        const dx = x - x0;
-        const dy = y - y0;
-
-        const dot00 = vec00.x * dx + vec00.y * dy;
-        const dot01 = vec01.x * dx + vec01.y * (dy - 1);
-        const dot10 = vec10.x * (dx - 1) + vec10.y * dy;
-        const dot11 = vec11.x * (dx - 1) + vec11.y * (dy - 1);
-
-        const u = fade(dx);
-        const v = fade(dy);
-
-        const lerpedX0 = lerp(dot00, dot10, u);
-        const lerpedX1 = lerp(dot01, dot11, u);
-        const lerpedY = lerp(lerpedX0, lerpedX1, v);
-
-        return (lerpedY + 1) / 2;
-    }
-
-    // Fade function for interpolation
-    function fade(t) {
-        return t * t * t * (t * (t * 6 - 15) + 10);
     }
 
     // Generate Perlin noise values
