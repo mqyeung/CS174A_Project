@@ -218,6 +218,7 @@ export class Assignment3 extends Scene {
             // plane2: new Array_Grid_Patch(generatePerlinNoise(20,20,2)),
             item: new defs.Item(4, 10),
             player: new defs.Player(),
+            sky: new defs.Subdivision_Sphere(4),
         };
 
         this.ship = new Ship();
@@ -244,6 +245,8 @@ export class Assignment3 extends Scene {
                 {ambient: 0.5, diffusivity: 0.3, specularity: 0.3, color: hex_color("#ffffff")}),
             ship_tail: new Material(new defs.Phong_Shader(),
                 {ambient: 0.5, diffusivity: 0.3, specularity: 0.3, color: hex_color("#ffffff")}),
+            sky: new Material(new defs.Phong_Shader(),
+                {ambient: 1.0, diffusivity: 0, specularity: 0, color: hex_color("#b49597")}),
         }
 
         this.shiplock = true;
@@ -254,6 +257,13 @@ export class Assignment3 extends Scene {
         this.turn = vec3(0,0,0); //we use all three
         this.s = new ShipPhysics(this.ship);
         this.initial_camera_location = Mat4.look_at(vec3(0, 10, 20), vec3(0, 0, 0), vec3(0, 1, 0));
+    }
+
+    make_html_text() {
+        let bestManeuver = document.getElementById("bestManeuver");
+        bestManeuver.innerHTML = (this.s.bestManeuver / this.s.maneuverTime).toFixed(2);
+        let maneuverPoints = document.getElementById("maneuverPoints");
+        maneuverPoints.innerHTML = this.s.maneuverPoints.toFixed(2);
     }
 
     make_control_panel() {
@@ -359,6 +369,8 @@ export class Assignment3 extends Scene {
             program_state.set_camera(target);//
         }
 
+        this.make_html_text();
+
         program_state.projection_transform = Mat4.perspective(
             Math.PI / 4, context.width / context.height, .1, 1000);
 
@@ -392,6 +404,9 @@ export class Assignment3 extends Scene {
         // this.ship.display(context, program_state, model_transform);
 
         this.shapes.plane.draw(context, program_state, Mat4.identity(), this.materials.terrain_material.override({color:white_color}))
+
+        const sky_transform = Mat4.translation(...this.s.pos).times(Mat4.scale(100, 100, 100)).times(Mat4.identity())
+        this.shapes.sky.draw(context, program_state, sky_transform, this.materials.sky)
         // this.shapes.plane2.draw(context, program_state, Mat4.scale(10,10,10), this.materials.diffuse_only.override({color:white_color}))
     }
 }
