@@ -431,7 +431,7 @@ export class Assignment3 extends Scene {
 
         //this.shapes.plane.draw(context, program_state, Mat4.identity(), this.materials.terrain_material.override({color:white_color}))
 
-        const sky_transform = Mat4.translation(...this.s.pos).times(Mat4.scale(100, 100, 100)).times(Mat4.identity())
+        const sky_transform = Mat4.translation(...this.s.pos).times(Mat4.scale(500, 500, 500)).times(Mat4.identity())
         this.shapes.sky.draw(context, program_state, sky_transform, this.materials.sky)
         // this.shapes.plane2.draw(context, program_state, Mat4.scale(10,10,10), this.materials.diffuse_only.override({color:white_color}))
 
