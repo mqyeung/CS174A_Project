@@ -83,7 +83,7 @@ class ShipPhysics {
         }
 
         if(turn[2] != 0){ //rolling
-            this.up = this.up.times(Math.cos(turn[2] * this.droll * dt)).plus(this.third.times(Math.sin(turn[2] * this.droll * dt)));
+            this.up = this.up.times(Math.cos(-1 * turn[2] * this.droll * dt)).plus(this.third.times(Math.sin(-1 * turn[2] * this.droll * dt)));
             //recompute up
             this.third = this.facing.cross(this.up);
         }
