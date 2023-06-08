@@ -15,6 +15,7 @@ import {
 } from './procgen.js';
 import {Terrain_Shader} from "./terrain_shader.js";
 import {Ship} from './obj-file.js';
+import {Explosion} from "./kaboom.js";
 
 class ShipPhysics {
     constructor(model) {
@@ -212,7 +213,7 @@ export class Assignment3 extends Scene {
             torus: new defs.Torus(15, 15),
             torus2: new defs.Torus(3, 32),
             sphere_4: new defs.Subdivision_Sphere(4),
-            plane: new Array_Grid_Patch(getTerrainNoiseArray(100,20), 20),
+            plane: new Array_Grid_Patch(getTerrainNoiseArray(50,20), 20),
             triangle: new defs.Triangle(),
             cube: new defs.Cube(),
             // plane2: new Array_Grid_Patch(generatePerlinNoise(20,20,2)),
@@ -221,6 +222,7 @@ export class Assignment3 extends Scene {
         };
 
         this.ship = new Ship();
+        this.explosion = new Explosion();
 
         // *** Materials
         this.materials = {
@@ -339,6 +341,9 @@ export class Assignment3 extends Scene {
         }
         if(this.paused || !this.s.structuralcoherence){
             this.waspaused = true;
+            if (!this.s.structuralcoherence) {
+                this.explosion.kaboom(context, program_state, Mat4.translation(...this.s.pos).post_multiply(Mat4.scale(2.5,2.5,2.5)))
+            }
         } else {
 
             let dt = 0;
@@ -393,6 +398,7 @@ export class Assignment3 extends Scene {
 
         this.shapes.plane.draw(context, program_state, Mat4.identity(), this.materials.terrain_material.override({color:white_color}))
         // this.shapes.plane2.draw(context, program_state, Mat4.scale(10,10,10), this.materials.diffuse_only.override({color:white_color}))
+
     }
 }
 

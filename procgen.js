@@ -94,7 +94,7 @@ export function getTerrainNoise(x, y) {
     return z_scale * perlinNoise(x / scale, y / scale) + small_z_scale * perlinNoise(x/small_scale,  y/small_scale)
 }
 
-export function getTerrainNoiseArray(subdivisions, output_size, z_scale) {
+export function getTerrainNoiseArray(subdivisions, output_size) {
     const noiseArray = new Array(subdivisions);
     for (let i = 0; i < subdivisions; i++) {
         noiseArray[i] = new Array(subdivisions);
@@ -102,7 +102,7 @@ export function getTerrainNoiseArray(subdivisions, output_size, z_scale) {
 
     for (let y = 0; y < subdivisions; y++) {
         for (let x = 0; x < subdivisions; x++) {
-            noiseArray[y][x] = getTerrainNoise(x*output_size/subdivisions,y*output_size/subdivisions)
+            noiseArray[x][y] = getTerrainNoise(x*output_size/subdivisions,y*output_size/subdivisions)
         }
     }
     return noiseArray;
