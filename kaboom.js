@@ -14,9 +14,9 @@ export class Explosion {
 
         this.materials = {
             fire_1: new Material(new Ripply_Phong(),
-                {ambient: .5, diffusivity: .6, color: hex_color("#ff0000")}),
+                {ambient: .9, diffusivity: .6, color: hex_color("#ff0000")}),
             fire_2: new Material(new Ripply_Phong(),
-                {ambient: .5, diffusivity: .6, color: hex_color("#ff9900")})
+                {ambient: .9, diffusivity: .6, color: hex_color("#ffaa22")})
         }
     }
 

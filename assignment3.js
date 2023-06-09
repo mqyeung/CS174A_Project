@@ -179,7 +179,7 @@ class ShipPhysics {
         return Matrix.of([0,-1 * v[2],v[1],0],[v[2],0,-1 * v[0],0],[-1 * v[1],v[0],0,0],[0,0,0,1]);
     }
 
-    get_camera(){
+    get_camera(animation_time){
         let v1 = this.facing;
         let v2 = this.up;
 
@@ -203,7 +203,11 @@ class ShipPhysics {
             v1 = vu;
         }
         //let dpos = this.pos.plus(this.up.times(.5))
-        return Mat4.look_at(v1.times(this.camdist).plus(this.up.times(4)).plus(this.pos),this.pos,v2);
+        let screenshake = Mat4.identity()
+        if (this.accel !== 0) {
+            screenshake = Mat4.translation(0,0.05 * Math.sin(0.1 * animation_time),0.05 * Math.sin(0.1 * animation_time))
+        }
+        return Mat4.look_at(v1.times(this.camdist).plus(this.up.times(4)).plus(this.pos),this.pos,v2).post_multiply(screenshake);
     }
 
 }
@@ -390,7 +394,7 @@ export class Assignment3 extends Scene {
             this.s.point_management(dt);
         }
         if(this.shiplock){
-            let target = this.s.get_camera();
+            let target = this.s.get_camera(program_state.animation_time);
             program_state.set_camera(target);//
         }
 
