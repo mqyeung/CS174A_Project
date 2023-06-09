@@ -49,11 +49,6 @@ class ShipPhysics {
         this.maneuverTime = 0; //the time this maneuver started
         this.bestTime = 0;
 
-        this.biggestX = 0;
-        this.biggestZ = 0;
-        this.smallestX = 0;
-        this.smallestZ = 0;
-
         this.structuralcoherence = true;
 
         //consider blending velocity into current facing? kind of mean bc it makes it very hard to turn...
@@ -62,21 +57,9 @@ class ShipPhysics {
         this.model = model; //model (external)
     }
     controlTick(acc,turn,dt) {
-        //skip the update if velocity's too far from facing
-        // if(this.velocity.norm() > 1){
-        //     let component = this.facing.dot(this.velocity) / this.velocity.norm();
-        //     if(component < this.blendfactor) {
-        //         //start bleeding stuff in
-        //         this.facing = this.facing.times(this.blendfactor * dt) + this.velocity.times((1 - this.blendfactor) * dt)
-        //     }
-        // }
-        if(acc != 0){
-            //this.accel += acc * this.daccel * dt;
 
-        }
         this.accel = 15 * acc;
-        if(turn[0] != 0){ //turning towards the axis orthogonal to up and facing
-            //console.log("turning");
+        if(turn[0] != 0){
             //shift the angle slightly
             this.facing = this.facing.times(Math.cos(turn[0] * this.dturn * dt)).plus(this.third.times(Math.sin(turn[0] * this.dturn * dt)));
             //recompute third
@@ -135,8 +118,6 @@ class ShipPhysics {
         this.pos = this.pos.plus(this.velocity.times(dt));
 
 
-        //spin!
-        //this.facing = vec3(Math.cos(2 * Math.PI * program_state.animation_time / 5000),0,Math.sin(2 * Math.PI * program_state.animation_time / 5000));
     }
 
     updateChunks(agp,gen,rd,cs){
@@ -227,16 +208,9 @@ class ShipPhysics {
             let rot = Mat4.identity();
             rot = rot.plus(sscross).plus(sscross.times(sscross).times(1 / (1 + dot)));
 
-            console.log(sscross.toString());
-            console.log(rot.toString());
-            //console.log(dot.toString());
-            console.log(vec4(...vu,0).toString());
-            console.log(rot.times(vec4(...vu,0)).toString());
-
             v2 = rot.times(v2);
             v1 = vu;
         }
-        //let dpos = this.pos.plus(this.up.times(.5))
         let screenshake = Mat4.identity()
         if (this.accel !== 0) {
             screenshake = Mat4.translation(0,0.05 * Math.sin(0.1 * animation_time),0.05 * Math.sin(0.1 * animation_time))
@@ -281,7 +255,6 @@ export class Assignment3 extends Scene {
 
             triangle: new defs.Triangle(),
             cube: new defs.Cube(),
-            // plane2: new Array_Grid_Patch(generatePerlinNoise(20,20,2)),
             item: new defs.Item(4, 10),
             player: new defs.Player(),
             sky: new defs.Subdivision_Sphere(4),
@@ -333,7 +306,6 @@ export class Assignment3 extends Scene {
         this.waspaused = false;
         this.turn = vec3(0, 0, 0); //we use all three
         this.s = new ShipPhysics(this.ship);
-        this.initial_camera_location = Mat4.look_at(vec3(0, 10, 20), vec3(0, 0, 0), vec3(0, 1, 0));
 
         const texture = new defs.Textured_Phong(1);
         this.text_image = new Material(texture, {
@@ -408,13 +380,6 @@ export class Assignment3 extends Scene {
     }
 
     display(context, program_state) {
-        // display():  Called once per frame of animation.
-        // Setup -- This part sets up the scene's overall camera matrix, projection matrix, and lights:
-        //if (!context.scratchpad.controls) {
-        //    this.children.push(context.scratchpad.controls = new defs.Movement_Controls());
-            // Define the global camera and projection matrices, which are stored in program_state.
-        //    program_state.set_camera(this.initial_camera_location);
-        //}
         this.s.height = this.s.getHeight();
         if(this.s.height < 0) this.s.structuralcoherence = false;
         if(this.tp){
@@ -457,7 +422,6 @@ export class Assignment3 extends Scene {
         program_state.projection_transform = Mat4.perspective(
             Math.PI / 4, context.width / context.height, .1, 1000);
 
-        // TODO: Create Planets (Requirement 1)
         let time = program_state.animation_time / 1000
 
         let sun_tx = Mat4.identity()
@@ -466,8 +430,6 @@ export class Assignment3 extends Scene {
         let sun_color = color(1, sun_color_single, sun_color_single, 1)
         let white_color = color(1,1,1,1)
         sun_tx = Mat4.scale(sun_scale, sun_scale, sun_scale).times(sun_tx)
-
-        // TODO: Lighting (Requirement 2)
         const light_position = vec4(0, 10, 0, 0);
         // The parameters of the Light are: position, color, size
         program_state.lights = [new Light(light_position, white_color, 100)];
@@ -475,16 +437,6 @@ export class Assignment3 extends Scene {
         // TODO:  Fill in matrix operations and drawing code to draw the solar system scene (Requirements 3 and 4)
 
         this.s.draw(context, program_state);
-        // this.shapes.sphere_4.draw(context, program_state, sun_tx, this.materials.max_ambient.override({color: sun_color}))
-
-        // let model_transform = Mat4.translation(10, 10, 10)
-        //     .times(Mat4.rotation(90, 1, 0, 0))
-        //     .times(Mat4.identity());
-        // this.shapes.item.draw(context, program_state, model_transform, this.materials.item);
-        //
-        // model_transform = Mat4.translation(3, 3, 3).times(model_transform);
-        //
-        // this.ship.display(context, program_state, model_transform);
         this.shapes.agp.forEach(i => i.forEach(j => j.draw(context, program_state, Mat4.translation(j.xpos,0,j.zpos).times(Mat4.scale(1,1,-1).times(Mat4.rotation(Math.PI / 2,0,1,0))), this.materials.terrain_material.override({color:white_color}))))
 
 
@@ -502,7 +454,7 @@ export class Assignment3 extends Scene {
             this.shapes.text.draw(context, program_state, program_state.camera_transform.times(text_transform.times(Mat4.scale(0.02, 0.02, 1))), this.text_image);
 
             let bestManeuverNum = 0
-            if (this.maneuverTime > .1) {
+            if (this.s.bestTime > .1) {
                 bestManeuverNum = (this.s.bestManeuver / this.s.maneuverTime).toFixed(2);
             }
             out = `Best Score: ${bestManeuverNum.toString(10)}`;
