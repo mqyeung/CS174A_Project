@@ -223,7 +223,7 @@ class ShipPhysics {
 
 }
 
-export class Assignment3 extends Scene {
+export class Project extends Scene {
     cs = 25; //size of chunk
     rd = 8; //# of chunks rendered
     get_agp(i,j){
@@ -286,18 +286,6 @@ export class Assignment3 extends Scene {
                 {ambient: 0, diffusivity: 0.8, specularity: 0, color: color(0.3, 0.3, 0.3, 1)}),
             terrain_material: new Material(new Terrain_Shader(),
                 {ambient: 0, diffusivity: 0.8, specularity: 0, color: color(0.3, 0.3, 0.3, 1)}),
-            // item: new Material(new defs.Phong_Shader(),
-            //     {ambient: 0.3, diffusivity: 0.8, specularity: 0.8, color: hex_color("#950706")}),
-            // player: new Material(new defs.Phong_Shader(),
-            //     {ambient: 0.5, diffusivity: 0.3, specularity: 0.3, color: hex_color("#ffffff")}),
-            // ship_body: new Material(new defs.Phong_Shader(),
-            //     {ambient: 0.5, diffusivity: 0.3, specularity: 0.3, color: hex_color("#ff1d8e")}),
-            // ship_wings: new Material(new defs.Phong_Shader(),
-            //     {ambient: 0.5, diffusivity: 0.3, specularity: 0.3, color: hex_color("#ff83c1")}),
-            // ship_fin: new Material(new defs.Phong_Shader(),
-            //     {ambient: 0.5, diffusivity: 0.3, specularity: 0.3, color: hex_color("#ffffff")}),
-            // ship_tail: new Material(new defs.Phong_Shader(),
-            //     {ambient: 0.5, diffusivity: 0.3, specularity: 0.3, color: hex_color("#ffffff")}),
             sky: new Material(new defs.Phong_Shader(),
                 {ambient: 1.0, diffusivity: 0, specularity: 0, color: hex_color("#b49597")}),
         }
@@ -427,6 +415,7 @@ export class Assignment3 extends Scene {
 
         let time = program_state.animation_time / 1000
 
+        // draw light
         let sun_tx = Mat4.identity()
         let sun_scale = 2 + Math.sin(time * (2*Math.PI/8))
         let sun_color_single = (sun_scale - 1) / 2
@@ -436,8 +425,6 @@ export class Assignment3 extends Scene {
         const light_position = vec4(0, 10, 0, 0);
         // The parameters of the Light are: position, color, size
         program_state.lights = [new Light(light_position, white_color, 100)];
-
-        // TODO:  Fill in matrix operations and drawing code to draw the solar system scene (Requirements 3 and 4)
 
         this.s.draw(context, program_state);
         this.shapes.agp.forEach(i => i.forEach(j => j.draw(context, program_state, Mat4.translation(j.xpos,0,j.zpos).times(Mat4.scale(1,1,-1).times(Mat4.rotation(Math.PI / 2,0,1,0))), this.materials.terrain_material.override({color:white_color}))))
