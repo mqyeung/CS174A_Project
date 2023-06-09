@@ -286,18 +286,18 @@ export class Assignment3 extends Scene {
                 {ambient: 0, diffusivity: 0.8, specularity: 0, color: color(0.3, 0.3, 0.3, 1)}),
             terrain_material: new Material(new Terrain_Shader(),
                 {ambient: 0, diffusivity: 0.8, specularity: 0, color: color(0.3, 0.3, 0.3, 1)}),
-            item: new Material(new defs.Phong_Shader(),
-                {ambient: 0.3, diffusivity: 0.8, specularity: 0.8, color: hex_color("#950706")}),
-            player: new Material(new defs.Phong_Shader(),
-                {ambient: 0.5, diffusivity: 0.3, specularity: 0.3, color: hex_color("#ffffff")}),
-            ship_body: new Material(new defs.Phong_Shader(),
-                {ambient: 0.5, diffusivity: 0.3, specularity: 0.3, color: hex_color("#ff1d8e")}),
-            ship_wings: new Material(new defs.Phong_Shader(),
-                {ambient: 0.5, diffusivity: 0.3, specularity: 0.3, color: hex_color("#ff83c1")}),
-            ship_fin: new Material(new defs.Phong_Shader(),
-                {ambient: 0.5, diffusivity: 0.3, specularity: 0.3, color: hex_color("#ffffff")}),
-            ship_tail: new Material(new defs.Phong_Shader(),
-                {ambient: 0.5, diffusivity: 0.3, specularity: 0.3, color: hex_color("#ffffff")}),
+            // item: new Material(new defs.Phong_Shader(),
+            //     {ambient: 0.3, diffusivity: 0.8, specularity: 0.8, color: hex_color("#950706")}),
+            // player: new Material(new defs.Phong_Shader(),
+            //     {ambient: 0.5, diffusivity: 0.3, specularity: 0.3, color: hex_color("#ffffff")}),
+            // ship_body: new Material(new defs.Phong_Shader(),
+            //     {ambient: 0.5, diffusivity: 0.3, specularity: 0.3, color: hex_color("#ff1d8e")}),
+            // ship_wings: new Material(new defs.Phong_Shader(),
+            //     {ambient: 0.5, diffusivity: 0.3, specularity: 0.3, color: hex_color("#ff83c1")}),
+            // ship_fin: new Material(new defs.Phong_Shader(),
+            //     {ambient: 0.5, diffusivity: 0.3, specularity: 0.3, color: hex_color("#ffffff")}),
+            // ship_tail: new Material(new defs.Phong_Shader(),
+            //     {ambient: 0.5, diffusivity: 0.3, specularity: 0.3, color: hex_color("#ffffff")}),
             sky: new Material(new defs.Phong_Shader(),
                 {ambient: 1.0, diffusivity: 0, specularity: 0, color: hex_color("#b49597")}),
         }
@@ -463,25 +463,28 @@ export class Assignment3 extends Scene {
 
             let bestManeuverNum = 0
             if (this.s.bestTime > .1) {
-                bestManeuverNum = (this.s.bestManeuver / this.s.maneuverTime).toFixed(2);
+                bestManeuverNum = (this.s.bestManeuver / this.s.bestTime).toFixed(2);
             }
-            out = `Best Score: ${bestManeuverNum.toString(10)}`;
+            out = `Best Maneuver: ${bestManeuverNum.toString(10)}`;
             text_transform = Mat4.translation(-.21, -.14, -1);
             this.shapes.text.set_string(out, context.context);
             this.shapes.text.draw(context, program_state, program_state.camera_transform.times(text_transform.times(Mat4.scale(0.02, 0.02, 1))), this.text_image);
         } else {
-            let curManeuverNum = this.s.maneuverPoints.toFixed(2)
+            let curManeuverNum = 0
+            if (this.s.maneuverTime > .1) {
+                curManeuverNum = (this.s.maneuverPoints/ this.s.maneuverTime).toFixed(2);
+            }
 
             let bestManeuverNum = 0
             if (this.s.bestTime > .1) {
                 bestManeuverNum = (this.s.bestManeuver / this.s.bestTime).toFixed(2);
             }
 
-            let out = `Current Score: ${curManeuverNum.toString(10)}`;
+            let out = `Current Maneuver: ${curManeuverNum.toString(10)}`;
             let text_transform = Mat4.translation(-.67, -.29, -1);
             this.shapes.text.set_string(out, context.context);
             this.shapes.text.draw(context, program_state, program_state.camera_transform.times(text_transform.times(Mat4.scale(0.025, 0.025, 1))), this.text_image);
-            out = `Best Score: ${bestManeuverNum.toString(10)}`;
+            out = `Best Maneuver: ${bestManeuverNum.toString(10)}`;
             text_transform = Mat4.translation(-.67, -.35, -1);
             this.shapes.text.set_string(out, context.context);
             this.shapes.text.draw(context, program_state, program_state.camera_transform.times(text_transform.times(Mat4.scale(0.025, 0.025, 1))), this.text_image);
