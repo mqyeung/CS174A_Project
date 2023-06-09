@@ -16,13 +16,14 @@ import {
 } from './procgen.js';
 import {Terrain_Shader} from "./terrain_shader.js";
 import {Ship} from './obj-file.js';
+import {Explosion} from "./kaboom.js";
 
 class ShipPhysics {
     constructor(model) {
 
         //HYPERPARAMETERS
 
-        this.pos = vec3(0,20,20); //initial position
+        this.pos = vec3(0,300,20); //initial position
         this.velocity = vec3(0,0,0); //initial velocity
         this.facing = vec3(1,0,0); //initial direction the ship's facing
         this.height = 10;
@@ -34,9 +35,9 @@ class ShipPhysics {
         this.dturn = Math.PI / 2; //radial turning per second of held controls
         this.droll = Math.PI //rolling speed
 
-        this.ag = 0; //acceleration due to gravity. haven't tried messing with this
+        this.ag = 9; //acceleration due to gravity. haven't tried messing with this
         this.drag = .1; //drag, necessary for good turning. .1 has worked well
-        this.wingdrag = .9; //increased drag along the axis perpendicular to the wings
+        this.wingdrag = 1.6; //increased drag along the axis perpendicular to the wings
         this.camdist = 15; //render distance of camera in units
         this.blendfactor = .7; //number between -1 and 1, ideally close to 1. cos(facing-velocity)<blendfactor induces bleed.
 
@@ -46,6 +47,11 @@ class ShipPhysics {
         this.bestManeuver = 0; //the best maneuver
         this.maneuverTime = 0; //the time this maneuver started
         this.bestTime = 0;
+
+        this.biggestX = 0;
+        this.biggestZ = 0;
+        this.smallestX = 0;
+        this.smallestZ = 0;
 
         this.structuralcoherence = true;
 
@@ -93,6 +99,22 @@ class ShipPhysics {
         this.facing = this.facing.times(1 / this.facing.norm());
         this.up = this.up.times(1 / this.up.norm());
         this.third = this.third.times(1 / this.third.norm());
+    }
+    structureTick(){
+        if(this.biggestX < this.pos[0] + 20) this.biggestX = this.pos[0];
+    }
+    reset() {
+        this.structuralcoherence = true;
+        this.pos = vec3(0,300,20);
+        this.velocity = vec3(0,0,0);
+        this.accel = 0;
+        this.facing = vec3(1,0,0);
+        this.up = vec3(0,1,0);
+        this.third = vec3(0,0,1);
+        this.bestTime = 0;
+        this.bestManeuver = 0;
+        this.maneuverTime = 0;
+        this.maneuverPoints = 0;
     }
     tick(dt,program_state){
 
@@ -158,7 +180,7 @@ class ShipPhysics {
         return Matrix.of([0,-1 * v[2],v[1],0],[v[2],0,-1 * v[0],0],[-1 * v[1],v[0],0,0],[0,0,0,1]);
     }
 
-    get_camera(){
+    get_camera(animation_time){
         let v1 = this.facing;
         let v2 = this.up;
 
@@ -182,7 +204,11 @@ class ShipPhysics {
             v1 = vu;
         }
         //let dpos = this.pos.plus(this.up.times(.5))
-        return Mat4.look_at(v1.times(this.camdist).plus(this.up.times(4)).plus(this.pos),this.pos,v2);
+        let screenshake = Mat4.identity()
+        if (this.accel !== 0) {
+            screenshake = Mat4.translation(0,0.05 * Math.sin(0.1 * animation_time),0.05 * Math.sin(0.1 * animation_time))
+        }
+        return Mat4.look_at(v1.times(this.camdist).plus(this.up.times(4)).plus(this.pos),this.pos,v2).post_multiply(screenshake);
     }
 
 }
@@ -213,7 +239,9 @@ export class Assignment3 extends Scene {
             torus: new defs.Torus(15, 15),
             torus2: new defs.Torus(3, 32),
             sphere_4: new defs.Subdivision_Sphere(4),
-            plane: new Array_Grid_Patch(getTerrainNoiseArray(100,20), 20),
+            plane: new Array_Grid_Patch(getTerrainNoiseArray(100,20,0,0),20,0,0),
+            agp: [],
+
             triangle: new defs.Triangle(),
             cube: new defs.Cube(),
             // plane2: new Array_Grid_Patch(generatePerlinNoise(20,20,2)),
@@ -223,7 +251,15 @@ export class Assignment3 extends Scene {
             text: new Text_Line(100),
         };
 
+        for(let j=-5;j<6;j++){
+            for (let i = -5; i < 6; i++){
+                this.shapes.agp.push(new Array_Grid_Patch(getTerrainNoiseArray(50,20,20 * i,20 * j),20,20 * i, 20 * j))
+            }
+        }
+
+
         this.ship = new Ship();
+        this.explosion = new Explosion();
 
         // *** Materials
         this.materials = {
@@ -270,7 +306,7 @@ export class Assignment3 extends Scene {
     make_control_panel() {
         // Draw the scene's buttons, setup their actions and keyboard shortcuts, and monitor live measurements.
         //this.key_triggered_button("Toggle camera lock on ship", ["Control", "0"], () => this.shiplock = !this.shiplock);
-        this.key_triggered_button("Teleport ship to starting pos", ["Control", "1"], () => this.tp = true);
+        this.key_triggered_button("Restart", ["p"], () => this.tp = true);
 
         this.live_string(box => box.textContent = "- Ship position: " + this.s.pos[0].toFixed(2) + ", " + this.s.pos[1].toFixed(2)
             + ", " + this.s.pos[2].toFixed(2));
@@ -294,12 +330,12 @@ export class Assignment3 extends Scene {
         this.key_triggered_button("Accelerate", [" "], () => this.accel = 1, undefined, () => this.accel = 0);
         this.key_triggered_button("Decelerate", ["o"], () => this.accel = -1, undefined, () => this.accel = 0);
         this.new_line();
-        this.key_triggered_button("Turn Left", ["a"], () => this.turn[0] = -1, undefined, () => this.turn[0] = 0);
-        this.key_triggered_button("Turn Right", ["d"], () => this.turn[0] = 1, undefined, () => this.turn[0] = 0);
-        this.key_triggered_button("Turn Up", ["w"], () => this.turn[1] = -1, undefined, () => this.turn[1] = 0);
-        this.key_triggered_button("Turn Down", ["s"], () => this.turn[1] = 1, undefined, () => this.turn[1] = 0);
-        this.key_triggered_button("Roll CCW", ["q"], () => this.turn[2] = -1, undefined, () => this.turn[2] = 0);
-        this.key_triggered_button("Roll CW", ["e"], () => this.turn[2] = 1, undefined, () => this.turn[2] = 0);
+        this.key_triggered_button("Yaw Left", ["q"], () => this.turn[0] = -1, undefined, () => this.turn[0] = 0);
+        this.key_triggered_button("Yaw Right", ["e"], () => this.turn[0] = 1, undefined, () => this.turn[0] = 0);
+        this.key_triggered_button("Pitch Up", ["w"], () => this.turn[1] = -1, undefined, () => this.turn[1] = 0);
+        this.key_triggered_button("Pitch Down", ["s"], () => this.turn[1] = 1, undefined, () => this.turn[1] = 0);
+        this.key_triggered_button("Roll CCW", ["a"], () => this.turn[2] = -0.5, undefined, () => this.turn[2] = 0);
+        this.key_triggered_button("Roll CW", ["d"], () => this.turn[2] = 0.5, undefined, () => this.turn[2] = 0);
         this.new_line();
         this.key_triggered_button("Pause", ["r"], () => this.paused = !this.paused);
 
@@ -336,20 +372,13 @@ export class Assignment3 extends Scene {
         if(this.s.height < 0) this.s.structuralcoherence = false;
         if(this.tp){
             this.tp = false;
-            this.s.structuralcoherence = true;
-            this.s.pos = vec3(0,20,20);
-            this.s.velocity = vec3(0,0,0);
-            this.s.accel = 0;
-            this.s.facing = vec3(1,0,0);
-            this.s.up = vec3(0,1,0);
-            this.s.third = vec3(0,0,1);
-            this.s.bestTime = 0;
-            this.s.bestManeuver = 0;
-            this.s.maneuverTime = 0;
-            this.s.maneuverPoints = 0;
+            this.s.reset();
         }
         if(this.paused || !this.s.structuralcoherence){
             this.waspaused = true;
+            if (!this.s.structuralcoherence) {
+                this.explosion.kaboom(context, program_state, Mat4.translation(...this.s.pos).post_multiply(Mat4.scale(2.5,2.5,2.5)))
+            }
         } else {
 
             let dt = 0;
@@ -366,7 +395,7 @@ export class Assignment3 extends Scene {
             this.s.point_management(dt);
         }
         if(this.shiplock){
-            let target = this.s.get_camera();
+            let target = this.s.get_camera(program_state.animation_time);
             program_state.set_camera(target);//
         }
 
@@ -401,10 +430,11 @@ export class Assignment3 extends Scene {
         // model_transform = Mat4.translation(3, 3, 3).times(model_transform);
         //
         // this.ship.display(context, program_state, model_transform);
+        this.shapes.agp.forEach(i => i.draw(context, program_state, Mat4.translation(i.xpos,0,i.zpos).times(Mat4.scale(1,1,-1).times(Mat4.rotation(Math.PI / 2,0,1,0))), this.materials.terrain_material.override({color:white_color})))
 
-        this.shapes.plane.draw(context, program_state, Mat4.identity(), this.materials.terrain_material.override({color:white_color}))
+        //this.shapes.plane.draw(context, program_state, Mat4.identity(), this.materials.terrain_material.override({color:white_color}))
 
-        const sky_transform = Mat4.translation(...this.s.pos).times(Mat4.scale(100, 100, 100)).times(Mat4.identity())
+        const sky_transform = Mat4.translation(...this.s.pos).times(Mat4.scale(600, 600, 600)).times(Mat4.identity())
         this.shapes.sky.draw(context, program_state, sky_transform, this.materials.sky)
         // this.shapes.plane2.draw(context, program_state, Mat4.scale(10,10,10), this.materials.diffuse_only.override({color:white_color}))
 
@@ -432,4 +462,3 @@ export class Assignment3 extends Scene {
         }
     }
 }
-

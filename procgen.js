@@ -87,14 +87,15 @@ export function generatePerlinNoiseArray(width, height, scale, z_scale = 1) {
     return noiseArray;
 }
 
-export function getTerrainNoise(x, y) {
-    let scale = 5, z_scale = 20
-    let small_scale = 2, small_z_scale = 0.5
+export function getTerrainNoise(y, x) {
+    let scale = 60, z_scale = 300
+    let small_scale = 24, small_z_scale = 30
+    let smallest_scale = 8, smallest_z_scale = 10
 
-    return z_scale * perlinNoise(x / scale, y / scale) + small_z_scale * perlinNoise(x/small_scale,  y/small_scale)
+    return z_scale * perlinNoise(x / scale, y / scale) + small_z_scale * perlinNoise(x/small_scale,  y/small_scale) + smallest_z_scale * perlinNoise(x/smallest_scale,  y/smallest_scale)
 }
 
-export function getTerrainNoiseArray(subdivisions, output_size, z_scale) {
+export function getTerrainNoiseArray(subdivisions, output_size, x_offset, y_offset) {
     const noiseArray = new Array(subdivisions);
     for (let i = 0; i < subdivisions; i++) {
         noiseArray[i] = new Array(subdivisions);
@@ -102,7 +103,7 @@ export function getTerrainNoiseArray(subdivisions, output_size, z_scale) {
 
     for (let y = 0; y < subdivisions; y++) {
         for (let x = 0; x < subdivisions; x++) {
-            noiseArray[y][x] = getTerrainNoise(x*output_size/subdivisions,y*output_size/subdivisions)
+            noiseArray[y][x] = getTerrainNoise(x*output_size/subdivisions + x_offset,y*output_size/subdivisions + y_offset)
         }
     }
     return noiseArray;
@@ -178,16 +179,20 @@ export function scalarAdd(arr, scalar) {
 // the following is a mostly-duped copy of the grid_patch code.
 // I had to break it a lot to get it to take an array.
 export class Array_Grid_Patch extends Shape {
+    xpos = 0;
+    zpos = 0;
     // A grid of rows and columns you can distort. A tesselation of triangles connects the
     // points, generated with a certain predictable pattern of indices.  Two callbacks
     // allow you to dynamically define how to reach the next row or column.
-    constructor(array, output_size) {
+    constructor(array, output_size,xpos,zpos) {
         let rows = array.length - 1
         let columns = array[0].length - 1
         let texture_coord_range = [[0, rows], [0, columns]]
         let scale = output_size / rows
 
         super("position", "normal", "texture_coord");
+        this.xpos = xpos;
+        this.zpos = zpos;
         let points = [];
         for (let r = 0; r <= rows; r++) {
             points.push(new Array(columns + 1));
