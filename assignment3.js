@@ -101,9 +101,7 @@ class ShipPhysics {
         this.up = this.up.times(1 / this.up.norm());
         this.third = this.third.times(1 / this.third.norm());
     }
-    structureTick(){
-        if(this.biggestX < this.pos[0] + 20) this.biggestX = this.pos[0];
-    }
+
     reset() {
         this.structuralcoherence = true;
         this.pos = vec3(0,500,20);
@@ -222,7 +220,7 @@ class ShipPhysics {
 
         let vu = this.velocity.times(-1 / this.velocity.norm());
         let dot = vu.dot(this.facing);
-        if(this.velocity.norm() > .1 && dot < .999 && false){ //if there's a major discrepancy
+        if(this.velocity.norm() > .1 && dot < .999 && false){ //if there's a nontrivial discrepancy
             //follow velocity
             //camera is following velocity, so we copy the facing -> velocity transform and spin the entire axis like that
             let cross = this.facing.cross(vu);
@@ -337,7 +335,14 @@ export class Assignment3 extends Scene {
         this.turn = vec3(0, 0, 0); //we use all three
         this.s = new ShipPhysics(this.ship);
         this.initial_camera_location = Mat4.look_at(vec3(0, 10, 20), vec3(0, 0, 0), vec3(0, 1, 0));
+
+        const texture = new defs.Textured_Phong(1);
+        this.text_image = new Material(texture, {
+            ambient: 1, diffusivity: 0, specularity: 0,
+            texture: new Texture("assets/text.png")
+        });
     }
+
 
     make_html_text() {
         let bestManeuver = document.getElementById("bestManeuver");
