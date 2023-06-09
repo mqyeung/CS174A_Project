@@ -505,23 +505,28 @@ export class Assignment3 extends Scene {
             if (this.s.bestTime > .1) {
                 bestManeuverNum = (this.s.bestManeuver / this.s.bestTime).toFixed(2);
             }
-            out = `Best Score: ${bestManeuverNum.toString(10)}`;
+            out = `Best Maneuver: ${bestManeuverNum.toString(10)}`;
             text_transform = Mat4.translation(-.21, -.14, -1);
             this.shapes.text.set_string(out, context.context);
             this.shapes.text.draw(context, program_state, program_state.camera_transform.times(text_transform.times(Mat4.scale(0.02, 0.02, 1))), this.text_image);
         } else {
-            let curManeuverNum = this.s.maneuverPoints.toFixed(2)
+            let curManeuverNum = (this.s.maneuverPoints/ this.s.maneuverTime).toFixed(2)
 
             let bestManeuverNum = 0
+<<<<<<< Updated upstream
             if (this.s.bestTime > .1) {
                 bestManeuverNum = (this.s.bestManeuver / this.s.bestTime).toFixed(2);
+=======
+            if (this.s.maneuverTime > .1) {
+                bestManeuverNum = this.s.bestManeuver.toFixed(2);
+>>>>>>> Stashed changes
             }
 
-            let out = `Current Score: ${curManeuverNum.toString(10)}`;
+            let out = `Current Maneuver: ${curManeuverNum.toString(10)}`;
             let text_transform = Mat4.translation(-.67, -.29, -1);
             this.shapes.text.set_string(out, context.context);
             this.shapes.text.draw(context, program_state, program_state.camera_transform.times(text_transform.times(Mat4.scale(0.025, 0.025, 1))), this.text_image);
-            out = `Best Score: ${bestManeuverNum.toString(10)}`;
+            out = `Best Maneuver: ${bestManeuverNum.toString(10)}`;
             text_transform = Mat4.translation(-.67, -.35, -1);
             this.shapes.text.set_string(out, context.context);
             this.shapes.text.draw(context, program_state, program_state.camera_transform.times(text_transform.times(Mat4.scale(0.025, 0.025, 1))), this.text_image);
