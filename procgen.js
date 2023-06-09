@@ -88,9 +88,9 @@ export function generatePerlinNoiseArray(width, height, scale, z_scale = 1) {
 }
 
 export function getTerrainNoise(y, x) {
-    let scale = 60, z_scale = 300
-    let small_scale = 24, small_z_scale = 30
-    let smallest_scale = 8, smallest_z_scale = 10
+    let scale = 100, z_scale = 500
+    let small_scale = 40, small_z_scale = 50
+    let smallest_scale = 12, smallest_z_scale = 15
 
     return z_scale * perlinNoise(x / scale, y / scale) + small_z_scale * perlinNoise(x/small_scale,  y/small_scale) + smallest_z_scale * perlinNoise(x/smallest_scale,  y/smallest_scale)
 }
