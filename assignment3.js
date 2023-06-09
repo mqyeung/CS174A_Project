@@ -34,9 +34,9 @@ class ShipPhysics {
         this.dturn = Math.PI / 2; //radial turning per second of held controls
         this.droll = Math.PI //rolling speed
 
-        this.ag = 0; //acceleration due to gravity. haven't tried messing with this
+        this.ag = 9; //acceleration due to gravity. haven't tried messing with this
         this.drag = .1; //drag, necessary for good turning. .1 has worked well
-        this.wingdrag = .9; //increased drag along the axis perpendicular to the wings
+        this.wingdrag = 1.6; //increased drag along the axis perpendicular to the wings
         this.camdist = 15; //render distance of camera in units
         this.blendfactor = .7; //number between -1 and 1, ideally close to 1. cos(facing-velocity)<blendfactor induces bleed.
 
@@ -247,7 +247,7 @@ export class Assignment3 extends Scene {
 
         for(let j=-5;j<6;j++){
             for (let i = -5; i < 6; i++){
-                this.shapes.agp.push(new Array_Grid_Patch(getTerrainNoiseArray(100,20,20 * i,20 * j),20,20 * i, 20 * j))
+                this.shapes.agp.push(new Array_Grid_Patch(getTerrainNoiseArray(50,20,20 * i,20 * j),20,20 * i, 20 * j))
             }
         }
 
@@ -325,12 +325,12 @@ export class Assignment3 extends Scene {
         this.key_triggered_button("Accelerate", [" "], () => this.accel = 1, undefined, () => this.accel = 0);
         this.key_triggered_button("Decelerate", ["o"], () => this.accel = -1, undefined, () => this.accel = 0);
         this.new_line();
-        this.key_triggered_button("Turn Left", ["a"], () => this.turn[0] = -1, undefined, () => this.turn[0] = 0);
-        this.key_triggered_button("Turn Right", ["d"], () => this.turn[0] = 1, undefined, () => this.turn[0] = 0);
-        this.key_triggered_button("Turn Up", ["w"], () => this.turn[1] = -1, undefined, () => this.turn[1] = 0);
-        this.key_triggered_button("Turn Down", ["s"], () => this.turn[1] = 1, undefined, () => this.turn[1] = 0);
-        this.key_triggered_button("Roll CCW", ["q"], () => this.turn[2] = -1, undefined, () => this.turn[2] = 0);
-        this.key_triggered_button("Roll CW", ["e"], () => this.turn[2] = 1, undefined, () => this.turn[2] = 0);
+        this.key_triggered_button("Yaw Left", ["q"], () => this.turn[0] = -1, undefined, () => this.turn[0] = 0);
+        this.key_triggered_button("Yaw Right", ["e"], () => this.turn[0] = 1, undefined, () => this.turn[0] = 0);
+        this.key_triggered_button("Pitch Up", ["w"], () => this.turn[1] = -1, undefined, () => this.turn[1] = 0);
+        this.key_triggered_button("Pitch Down", ["s"], () => this.turn[1] = 1, undefined, () => this.turn[1] = 0);
+        this.key_triggered_button("Roll CCW", ["a"], () => this.turn[2] = -0.5, undefined, () => this.turn[2] = 0);
+        this.key_triggered_button("Roll CW", ["d"], () => this.turn[2] = 0.5, undefined, () => this.turn[2] = 0);
         this.new_line();
         this.key_triggered_button("Pause", ["r"], () => this.paused = !this.paused);
 
