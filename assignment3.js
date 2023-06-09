@@ -443,13 +443,26 @@ export class Assignment3 extends Scene {
             let text_transform = Mat4.translation(-.4, 0, -1);
             this.shapes.text.set_string(out, context.context);
             this.shapes.text.draw(context, program_state, program_state.camera_transform.times(text_transform.times(Mat4.scale(0.06, 0.06, 1))), this.text_image);
-            out = `Press Control+1 to restart.`;
-            text_transform = Mat4.translation(-.37, -.09, -1);
+            out = `Press p to restart.`;
+            text_transform = Mat4.translation(-.29, -.09, -1);
+            this.shapes.text.set_string(out, context.context);
+            this.shapes.text.draw(context, program_state, program_state.camera_transform.times(text_transform.times(Mat4.scale(0.02, 0.02, 1))), this.text_image);
+
+            let bestManeuverNum = 0
+            if (this.maneuverTime > .1) {
+                bestManeuverNum = (this.s.bestManeuver / this.s.maneuverTime).toFixed(2);
+            }
+            out = `Best Score: ${bestManeuverNum.toString(10)}`;
+            text_transform = Mat4.translation(-.21, -.14, -1);
             this.shapes.text.set_string(out, context.context);
             this.shapes.text.draw(context, program_state, program_state.camera_transform.times(text_transform.times(Mat4.scale(0.02, 0.02, 1))), this.text_image);
         } else {
-            const curManeuverNum = this.s.maneuverPoints.toFixed(2)
-            const bestManeuverNum = (this.s.bestManeuver / this.s.maneuverTime).toFixed(2);
+            let curManeuverNum = this.s.maneuverPoints.toFixed(2)
+
+            let bestManeuverNum = 0
+            if (this.maneuverTime > .1) {
+                bestManeuverNum = (this.s.bestManeuver / this.s.maneuverTime).toFixed(2);
+            }
 
             let out = `Current Score: ${curManeuverNum.toString(10)}`;
             let text_transform = Mat4.translation(-.67, -.29, -1);
