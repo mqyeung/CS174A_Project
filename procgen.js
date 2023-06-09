@@ -103,7 +103,7 @@ export function getTerrainNoiseArray(subdivisions, output_size, x_offset, y_offs
 
     for (let y = 0; y < subdivisions; y++) {
         for (let x = 0; x < subdivisions; x++) {
-            noiseArray[y][x] = getTerrainNoise(x*output_size/subdivisions + x_offset,y*output_size/subdivisions + y_offset)
+            noiseArray[y][x] = getTerrainNoise(x*(output_size+1)/subdivisions + x_offset,y*(output_size+1)/subdivisions + y_offset)
         }
     }
     return noiseArray;

@@ -225,9 +225,9 @@ class ShipPhysics {
 
 export class Assignment3 extends Scene {
     cs = 25; //size of chunk
-    rd = 5; //# of chunks rendered
+    rd = 8; //# of chunks rendered
     get_agp(i,j){
-        return new Array_Grid_Patch(getTerrainNoiseArray(30,25,25 * i,25 * j),25,25 * i, 25 * j)
+        return new Array_Grid_Patch(getTerrainNoiseArray(20,25,25 * i,25 * j),25,25 * i, 25 * j)
     }
     constructor() {
         // constructor(): Scenes begin by populating initial values like the Shapes and Materials they'll need.
