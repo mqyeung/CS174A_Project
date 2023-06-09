@@ -1,5 +1,5 @@
-// todo: make explosion animation on crash :)
-// also todo, in a separate file: make procedural tail particles
+// this file implements the explosion graphics. It's a two-shape object and a geometry shader that makes
+//   a pseudorandom pulsating explosion effect.
 import {defs, tiny} from "./examples/common.js";
 const {
     Vector, Vector3, vec, vec3, vec4, color, hex_color, Shader, Matrix, Mat4, Light, Shape, Material, Scene,
