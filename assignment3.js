@@ -42,7 +42,7 @@ class ShipPhysics {
         this.camdist = 15; //render distance of camera in units
         this.blendfactor = .7; //number between -1 and 1, ideally close to 1. cos(facing-velocity)<blendfactor induces bleed.
 
-        this.startingManeuverHeight = 10; //the point at which a maneuver starts
+        this.startingManeuverHeight = 20; //the point at which a maneuver starts
         this.maneuverPoints = 0; //the number of points in the current maneuver
         this.totalPoints = 0; //the number of points across all maneuvers this run
         this.bestManeuver = 0; //the best maneuver
@@ -184,9 +184,8 @@ class ShipPhysics {
         }
         if(h > this.startingManeuverHeight && this.maneuverTime > .1){
             //end maneuver
-            let pps = this.maneuverPoints / this.maneuverTime;
-            if(pps > this.bestManeuver){
-                this.bestManeuver = pps;
+            if(this.maneuverTime > .01 && (this.bestTime < .01 || this.maneuverPoints / this.maneuverTime > this.bestManeuver / this.bestTime)){
+                this.bestManeuver = this.maneuverPoints;
                 this.bestTime = this.maneuverTime;
                 console.log("new record!");
             }
@@ -371,7 +370,7 @@ export class Assignment3 extends Scene {
         this.new_line();
         this.live_string(box => box.textContent = "- In maneuver for: " + this.s.maneuverTime.toFixed(2) + " seconds.");
         this.new_line();
-        this.live_string(box => box.textContent = "- Best maneuver: " + this.s.bestManeuver.toFixed(2) + " points/sec for " + this.s.bestTime.toFixed(2) + " seconds.");
+        this.live_string(box => box.textContent = "- Best maneuver: " + this.s.bestManeuver.toFixed(2) + " points in " + this.s.bestTime.toFixed(2) + " seconds.");
         this.new_line();
         this.live_string(box => box.textContent = "You are: " + (this.s.structuralcoherence ? "structurally capable" : "blown to smithereens"));
         this.new_line();
@@ -514,8 +513,8 @@ export class Assignment3 extends Scene {
             let curManeuverNum = this.s.maneuverPoints.toFixed(2)
 
             let bestManeuverNum = 0
-            if (this.maneuverTime > .1) {
-                bestManeuverNum = (this.s.bestManeuver / this.s.maneuverTime).toFixed(2);
+            if (this.s.bestTime > .1) {
+                bestManeuverNum = (this.s.bestManeuver / this.s.bestTime).toFixed(2);
             }
 
             let out = `Current Score: ${curManeuverNum.toString(10)}`;
