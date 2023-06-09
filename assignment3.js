@@ -466,7 +466,7 @@ export class Assignment3 extends Scene {
                 bestManeuverNum = (this.s.bestManeuver / this.s.bestTime).toFixed(2);
             }
             out = `Best Maneuver: ${bestManeuverNum.toString(10)}`;
-            text_transform = Mat4.translation(-.21, -.14, -1);
+            text_transform = Mat4.translation(-.25, -.14, -1);
             this.shapes.text.set_string(out, context.context);
             this.shapes.text.draw(context, program_state, program_state.camera_transform.times(text_transform.times(Mat4.scale(0.02, 0.02, 1))), this.text_image);
         } else {
