@@ -1,7 +1,8 @@
 import {defs, tiny} from './examples/common.js';
+import {Text_Line} from "./examples/text-demo.js";
 
 const {
-    Vector, Vector3, vec, vec3, vec4, color, hex_color, Shader, Matrix, Mat4, Light, Shape, Material, Scene,
+    Vector, Vector3, vec, vec3, vec4, color, hex_color, Shader, Matrix, Mat4, Light, Shape, Material, Scene, Texture
 } = tiny;
 
 import {
@@ -219,6 +220,7 @@ export class Assignment3 extends Scene {
             item: new defs.Item(4, 10),
             player: new defs.Player(),
             sky: new defs.Subdivision_Sphere(4),
+            text: new Text_Line(100),
         };
 
         this.ship = new Ship();
@@ -238,9 +240,9 @@ export class Assignment3 extends Scene {
             player: new Material(new defs.Phong_Shader(),
                 {ambient: 0.5, diffusivity: 0.3, specularity: 0.3, color: hex_color("#ffffff")}),
             ship_body: new Material(new defs.Phong_Shader(),
-                {ambient: 0.5, diffusivity: 0.3, specularity: 0.3, color: hex_color("#950706")}),
+                {ambient: 0.5, diffusivity: 0.3, specularity: 0.3, color: hex_color("#ff1d8e")}),
             ship_wings: new Material(new defs.Phong_Shader(),
-                {ambient: 0.5, diffusivity: 0.3, specularity: 0.3, color: hex_color("#E3242B")}),
+                {ambient: 0.5, diffusivity: 0.3, specularity: 0.3, color: hex_color("#ff83c1")}),
             ship_fin: new Material(new defs.Phong_Shader(),
                 {ambient: 0.5, diffusivity: 0.3, specularity: 0.3, color: hex_color("#ffffff")}),
             ship_tail: new Material(new defs.Phong_Shader(),
@@ -257,13 +259,12 @@ export class Assignment3 extends Scene {
         this.turn = vec3(0,0,0); //we use all three
         this.s = new ShipPhysics(this.ship);
         this.initial_camera_location = Mat4.look_at(vec3(0, 10, 20), vec3(0, 0, 0), vec3(0, 1, 0));
-    }
 
-    make_html_text() {
-        let bestManeuver = document.getElementById("bestManeuver");
-        bestManeuver.innerHTML = (this.s.bestManeuver / this.s.maneuverTime).toFixed(2);
-        let maneuverPoints = document.getElementById("maneuverPoints");
-        maneuverPoints.innerHTML = this.s.maneuverPoints.toFixed(2);
+        const texture = new defs.Textured_Phong(1);
+        this.text_image = new Material(texture, {
+            ambient: 1, diffusivity: 0, specularity: 0,
+            texture: new Texture("assets/text.png")
+        });
     }
 
     make_control_panel() {
@@ -369,8 +370,6 @@ export class Assignment3 extends Scene {
             program_state.set_camera(target);//
         }
 
-        this.make_html_text();
-
         program_state.projection_transform = Mat4.perspective(
             Math.PI / 4, context.width / context.height, .1, 1000);
 
@@ -408,6 +407,29 @@ export class Assignment3 extends Scene {
         const sky_transform = Mat4.translation(...this.s.pos).times(Mat4.scale(100, 100, 100)).times(Mat4.identity())
         this.shapes.sky.draw(context, program_state, sky_transform, this.materials.sky)
         // this.shapes.plane2.draw(context, program_state, Mat4.scale(10,10,10), this.materials.diffuse_only.override({color:white_color}))
+
+        if (!this.s.structuralcoherence) {
+            let out = `Game Over!`;
+            let text_transform = Mat4.translation(-.4, 0, -1);
+            this.shapes.text.set_string(out, context.context);
+            this.shapes.text.draw(context, program_state, program_state.camera_transform.times(text_transform.times(Mat4.scale(0.06, 0.06, 1))), this.text_image);
+            out = `Press Control+1 to restart.`;
+            text_transform = Mat4.translation(-.37, -.09, -1);
+            this.shapes.text.set_string(out, context.context);
+            this.shapes.text.draw(context, program_state, program_state.camera_transform.times(text_transform.times(Mat4.scale(0.02, 0.02, 1))), this.text_image);
+        } else {
+            const curManeuverNum = this.s.maneuverPoints.toFixed(2)
+            const bestManeuverNum = (this.s.bestManeuver / this.s.maneuverTime).toFixed(2);
+
+            let out = `Current Score: ${curManeuverNum.toString(10)}`;
+            let text_transform = Mat4.translation(-.67, -.29, -1);
+            this.shapes.text.set_string(out, context.context);
+            this.shapes.text.draw(context, program_state, program_state.camera_transform.times(text_transform.times(Mat4.scale(0.025, 0.025, 1))), this.text_image);
+            out = `Best Score: ${bestManeuverNum.toString(10)}`;
+            text_transform = Mat4.translation(-.67, -.35, -1);
+            this.shapes.text.set_string(out, context.context);
+            this.shapes.text.draw(context, program_state, program_state.camera_transform.times(text_transform.times(Mat4.scale(0.025, 0.025, 1))), this.text_image);
+        }
     }
 }
 
