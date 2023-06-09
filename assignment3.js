@@ -23,7 +23,8 @@ class ShipPhysics {
 
         //HYPERPARAMETERS
 
-        this.pos = vec3(0,300,20); //initial position
+        this.pos = vec3(0,500,20); //initial position
+        this.chunk = vec3(0,0,0);
         this.velocity = vec3(0,0,0); //initial velocity
         this.facing = vec3(1,0,0); //initial direction the ship's facing
         this.height = 10;
@@ -73,7 +74,7 @@ class ShipPhysics {
             //this.accel += acc * this.daccel * dt;
 
         }
-        this.accel = 10 * acc;
+        this.accel = 15 * acc;
         if(turn[0] != 0){ //turning towards the axis orthogonal to up and facing
             //console.log("turning");
             //shift the angle slightly
@@ -105,8 +106,9 @@ class ShipPhysics {
     }
     reset() {
         this.structuralcoherence = true;
-        this.pos = vec3(0,300,20);
+        this.pos = vec3(0,500,20);
         this.velocity = vec3(0,0,0);
+        this.chunk = vec3(0,0,0);
         this.accel = 0;
         this.facing = vec3(1,0,0);
         this.up = vec3(0,1,0);
@@ -137,6 +139,40 @@ class ShipPhysics {
 
         //spin!
         //this.facing = vec3(Math.cos(2 * Math.PI * program_state.animation_time / 5000),0,Math.sin(2 * Math.PI * program_state.animation_time / 5000));
+    }
+
+    updateChunks(agp,gen,rd,cs){
+        let newchunk = vec3(Math.floor(this.pos[0] / cs),0,Math.floor(this.pos[2] / cs));
+        if(newchunk[0] - this.chunk[0] > 0){
+            //we've moved at least one chunk to the left (let's just assume one
+            //pop the last row
+            agp.shift();
+            agp.push(Array.from(new Array(2 * rd + 1),(x,i) => gen(newchunk[0] + rd,newchunk[2] - rd + i))); //push a new row of chunks onto agp
+        }
+        if(newchunk[0] - this.chunk[0] < 0){
+            //we've moved at least one chunk to negative x (let's just assume one
+            //pop the last row
+            agp.pop();
+            agp.unshift(Array.from(new Array(2 * rd + 1),(x,i) => gen(newchunk[0] - rd,newchunk[2] - rd + i))); //push a new row of chunks onto agp
+        }
+        if(newchunk[2] - this.chunk[2] > 0){
+            //we've moved at least one chunk in positive z
+            //pop the last row
+            for(let i=0;i<2 * rd + 1;i++){
+                agp[i].push(gen(newchunk[0] - rd + i,newchunk[2] + rd));
+                agp[i].shift();
+            }
+
+        }
+        if(newchunk[2] - this.chunk[2] < 0){
+            //we've moved at least one chunk in positive z
+            //pop the last row
+            for(let i=0;i<2 * rd + 1;i++){
+                agp[i].unshift(gen(newchunk[0] - rd + i,newchunk[2] - rd));
+                agp[i].pop();
+            }
+        }
+        this.chunk = newchunk;
     }
 
     getHeight(){
@@ -214,6 +250,11 @@ class ShipPhysics {
 }
 
 export class Assignment3 extends Scene {
+    cs = 25; //size of chunk
+    rd = 5; //# of chunks rendered
+    get_agp(i,j){
+        return new Array_Grid_Patch(getTerrainNoiseArray(30,25,25 * i,25 * j),25,25 * i, 25 * j)
+    }
     constructor() {
         // constructor(): Scenes begin by populating initial values like the Shapes and Materials they'll need.
         super();
@@ -251,15 +292,17 @@ export class Assignment3 extends Scene {
             text: new Text_Line(100),
         };
 
-        for(let j=-5;j<6;j++){
-            for (let i = -5; i < 6; i++){
-                this.shapes.agp.push(new Array_Grid_Patch(getTerrainNoiseArray(50,20,20 * i,20 * j),20,20 * i, 20 * j))
+        for(let i=-1 * this.rd;i<this.rd+1;i++){
+            this.shapes.agp.push([]);
+            for (let j = -1 * this.rd; j < this.rd+1; j++){
+                this.shapes.agp[i+this.rd].push(this.get_agp(i,j));
             }
         }
 
 
         this.ship = new Ship();
         this.explosion = new Explosion();
+
 
         // *** Materials
         this.materials = {
@@ -296,11 +339,12 @@ export class Assignment3 extends Scene {
         this.s = new ShipPhysics(this.ship);
         this.initial_camera_location = Mat4.look_at(vec3(0, 10, 20), vec3(0, 0, 0), vec3(0, 1, 0));
 
-        const texture = new defs.Textured_Phong(1);
-        this.text_image = new Material(texture, {
-            ambient: 1, diffusivity: 0, specularity: 0,
-            texture: new Texture("assets/text.png")
-        });
+
+    make_html_text() {
+        let bestManeuver = document.getElementById("bestManeuver");
+        bestManeuver.innerHTML = (this.s.bestManeuver / this.s.maneuverTime).toFixed(2);
+        let maneuverPoints = document.getElementById("maneuverPoints");
+        maneuverPoints.innerHTML = this.s.maneuverPoints.toFixed(2);
     }
 
     make_control_panel() {
@@ -309,7 +353,7 @@ export class Assignment3 extends Scene {
         this.key_triggered_button("Restart", ["p"], () => this.tp = true);
 
         this.live_string(box => box.textContent = "- Ship position: " + this.s.pos[0].toFixed(2) + ", " + this.s.pos[1].toFixed(2)
-            + ", " + this.s.pos[2].toFixed(2));
+            + ", " + this.s.pos[2].toFixed(2) + " , chunk " + this.s.chunk[0] + ", " + this.s.chunk[2]);
         this.new_line();
         this.live_string(box => box.textContent = "- Ship velocity: " + this.s.velocity[0].toFixed(2) + ", " + this.s.velocity[1].toFixed(2)
             + ", " + this.s.velocity[2].toFixed(2));
@@ -373,6 +417,13 @@ export class Assignment3 extends Scene {
         if(this.tp){
             this.tp = false;
             this.s.reset();
+            this.shapes.agp = [];
+            for(let i=-1 * this.rd;i<this.rd + 1;i++){
+                this.shapes.agp.push([]);
+                for (let j = -1 * this.rd; j < this.rd + 1; j++){
+                    this.shapes.agp[i+this.rd].push(this.get_agp(i,j));
+                }
+            }
         }
         if(this.paused || !this.s.structuralcoherence){
             this.waspaused = true;
@@ -392,6 +443,7 @@ export class Assignment3 extends Scene {
             this.t = program_state.animation_time;
             this.s.controlTick(this.accel,this.turn,dt);
             this.s.tick(dt,program_state);
+            this.s.updateChunks(this.shapes.agp,this.get_agp,this.rd,this.cs);
             this.s.point_management(dt);
         }
         if(this.shiplock){
@@ -430,7 +482,7 @@ export class Assignment3 extends Scene {
         // model_transform = Mat4.translation(3, 3, 3).times(model_transform);
         //
         // this.ship.display(context, program_state, model_transform);
-        this.shapes.agp.forEach(i => i.draw(context, program_state, Mat4.translation(i.xpos,0,i.zpos).times(Mat4.scale(1,1,-1).times(Mat4.rotation(Math.PI / 2,0,1,0))), this.materials.terrain_material.override({color:white_color})))
+        this.shapes.agp.forEach(i => i.forEach(j => j.draw(context, program_state, Mat4.translation(j.xpos,0,j.zpos).times(Mat4.scale(1,1,-1).times(Mat4.rotation(Math.PI / 2,0,1,0))), this.materials.terrain_material.override({color:white_color}))))
 
         //this.shapes.plane.draw(context, program_state, Mat4.identity(), this.materials.terrain_material.override({color:white_color}))
 

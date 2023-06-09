@@ -745,19 +745,19 @@ const Graphics_Card_Object = tiny.Graphics_Card_Object =
             // per object; doing it more is expensive, so warn them with an "idiot
             // alarm". Don't trigger the idiot alarm if the user is correctly re-using
             // an existing GPU context and merely overwriting parts of itself.
-            if (!existing_instance) {
-                Graphics_Card_Object.idiot_alarm |= 0;     // Start a program-wide counter.
-                if (Graphics_Card_Object.idiot_alarm++ > 200)
-                    throw `Error: You are sending a lot of object definitions to the GPU, probably by mistake!  
-                    Many of them are likely duplicates, which you don't want since sending each one is very slow.  
-                    To avoid this, from your display() function avoid ever declaring a Shape Shader or Texture (or 
-                    subclass of these) with "new", thus causing the definition to be re-created and re-transmitted every
-                    frame. Instead, call these in your scene's constructor and keep the result as a class member, 
-                    or otherwise make sure it only happens once.  In the off chance that you have a somehow deformable 
-                    shape that MUST change every frame, then at least use the special arguments of 
-                    copy_onto_graphics_card to limit which buffers get overwritten every frame to only 
-                    the necessary ones.`;
-            }
+            // if (!existing_instance) {
+            //     Graphics_Card_Object.idiot_alarm |= 0;     // Start a program-wide counter.
+            //     if (Graphics_Card_Object.idiot_alarm++ > 200)
+            //         throw `Error: You are sending a lot of object definitions to the GPU, probably by mistake!
+            //         Many of them are likely duplicates, which you don't want since sending each one is very slow.
+            //         To avoid this, from your display() function avoid ever declaring a Shape Shader or Texture (or
+            //         subclass of these) with "new", thus causing the definition to be re-created and re-transmitted every
+            //         frame. Instead, call these in your scene's constructor and keep the result as a class member,
+            //         or otherwise make sure it only happens once.  In the off chance that you have a somehow deformable
+            //         shape that MUST change every frame, then at least use the special arguments of
+            //         copy_onto_graphics_card to limit which buffers get overwritten every frame to only
+            //         the necessary ones.`;
+            // }
             // Check if this object already exists on that GPU context.
             return existing_instance ||             // If necessary, start a new object associated with the context.
                 this.gpu_instances.set(context, intial_gpu_representation).get(context);
