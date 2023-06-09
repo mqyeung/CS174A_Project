@@ -280,7 +280,6 @@ export class Assignment3 extends Scene {
             torus: new defs.Torus(15, 15),
             torus2: new defs.Torus(3, 32),
             sphere_4: new defs.Subdivision_Sphere(4),
-            plane: new Array_Grid_Patch(getTerrainNoiseArray(100,20,0,0),20,0,0),
             agp: [],
 
             triangle: new defs.Triangle(),
@@ -292,10 +291,10 @@ export class Assignment3 extends Scene {
             text: new Text_Line(100),
         };
 
-        for(let i=-1 * this.rd;i<this.rd+1;i++){
+        for (let i = -1 * this.rd; i < this.rd + 1; i++) {
             this.shapes.agp.push([]);
-            for (let j = -1 * this.rd; j < this.rd+1; j++){
-                this.shapes.agp[i+this.rd].push(this.get_agp(i,j));
+            for (let j = -1 * this.rd; j < this.rd + 1; j++) {
+                this.shapes.agp[i + this.rd].push(this.get_agp(i, j));
             }
         }
 
@@ -313,7 +312,7 @@ export class Assignment3 extends Scene {
             diffuse_only: new Material(new defs.Phong_Shader(),
                 {ambient: 0, diffusivity: 0.8, specularity: 0, color: color(0.3, 0.3, 0.3, 1)}),
             terrain_material: new Material(new Terrain_Shader(),
-                {ambient: 0, diffusivity: 0.8, specularity: 0, color: color(0.3,0.3,0.3,1)}),
+                {ambient: 0, diffusivity: 0.8, specularity: 0, color: color(0.3, 0.3, 0.3, 1)}),
             item: new Material(new defs.Phong_Shader(),
                 {ambient: 0.3, diffusivity: 0.8, specularity: 0.8, color: hex_color("#950706")}),
             player: new Material(new defs.Phong_Shader(),
@@ -335,10 +334,10 @@ export class Assignment3 extends Scene {
         this.accel = 0;
         this.paused = false;
         this.waspaused = false;
-        this.turn = vec3(0,0,0); //we use all three
+        this.turn = vec3(0, 0, 0); //we use all three
         this.s = new ShipPhysics(this.ship);
         this.initial_camera_location = Mat4.look_at(vec3(0, 10, 20), vec3(0, 0, 0), vec3(0, 1, 0));
-
+    }
 
     make_html_text() {
         let bestManeuver = document.getElementById("bestManeuver");
@@ -484,11 +483,9 @@ export class Assignment3 extends Scene {
         // this.ship.display(context, program_state, model_transform);
         this.shapes.agp.forEach(i => i.forEach(j => j.draw(context, program_state, Mat4.translation(j.xpos,0,j.zpos).times(Mat4.scale(1,1,-1).times(Mat4.rotation(Math.PI / 2,0,1,0))), this.materials.terrain_material.override({color:white_color}))))
 
-        //this.shapes.plane.draw(context, program_state, Mat4.identity(), this.materials.terrain_material.override({color:white_color}))
 
         const sky_transform = Mat4.translation(...this.s.pos).times(Mat4.scale(600, 600, 600)).times(Mat4.identity())
         this.shapes.sky.draw(context, program_state, sky_transform, this.materials.sky)
-        // this.shapes.plane2.draw(context, program_state, Mat4.scale(10,10,10), this.materials.diffuse_only.override({color:white_color}))
 
         if (!this.s.structuralcoherence) {
             let out = `Game Over!`;
