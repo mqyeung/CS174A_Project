@@ -470,7 +470,10 @@ export class Assignment3 extends Scene {
             this.shapes.text.set_string(out, context.context);
             this.shapes.text.draw(context, program_state, program_state.camera_transform.times(text_transform.times(Mat4.scale(0.02, 0.02, 1))), this.text_image);
         } else {
-            let curManeuverNum = (this.s.maneuverPoints/ this.s.maneuverTime).toFixed(2)
+            let curManeuverNum = 0
+            if (this.s.maneuverTime > .1) {
+                curManeuverNum = (this.s.maneuverPoints/ this.s.maneuverTime).toFixed(2);
+            }
 
             let bestManeuverNum = 0
             if (this.s.bestTime > .1) {
