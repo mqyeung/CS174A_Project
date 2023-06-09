@@ -17,11 +17,13 @@ import {
 import {Terrain_Shader} from "./terrain_shader.js";
 import {Ship} from './obj-file.js';
 import {Explosion} from "./kaboom.js";
+import {ExhaustTrail} from "./trail.js";
 
 class ShipPhysics {
     constructor(model) {
 
         //HYPERPARAMETERS
+        this.ship_mat4 = Mat4.identity()
 
         this.pos = vec3(0,500,20); //initial position
         this.chunk = vec3(0,0,0);
@@ -187,6 +189,7 @@ class ShipPhysics {
         let cob = Mat4.of(vec4(...this.facing,0),vec4(...this.third,0),vec4(...this.up,0),vec4(0,0,0,1)).times(Mat4.scale(-1,-1,-1));
 
         model_transform = model_transform.times(Mat4.inverse(cob)); //and multiply
+        this.ship_mat4 = model_transform
         this.model.display(context, program_state, model_transform);
     }
 
@@ -271,7 +274,7 @@ export class Assignment3 extends Scene {
 
         this.ship = new Ship();
         this.explosion = new Explosion();
-
+        this.trail = new ExhaustTrail()
 
         // *** Materials
         this.materials = {
@@ -439,6 +442,11 @@ export class Assignment3 extends Scene {
         this.s.draw(context, program_state);
         this.shapes.agp.forEach(i => i.forEach(j => j.draw(context, program_state, Mat4.translation(j.xpos,0,j.zpos).times(Mat4.scale(1,1,-1).times(Mat4.rotation(Math.PI / 2,0,1,0))), this.materials.terrain_material.override({color:white_color}))))
 
+        if (this.s.accel === 0) {
+            this.trail.update_trail(context, program_state, this.s.ship_mat4.post_multiply(Mat4.translation(-2.5,0,0).post_multiply(Mat4.identity().post_multiply(Mat4.rotation(Math.random() * 360, 0, 1, 0)))))
+        }else{
+            this.trail.update_trail(context, program_state, this.s.ship_mat4.post_multiply(Mat4.translation(-2.5,0,0).post_multiply(Mat4.scale(2,2,2).post_multiply(Mat4.rotation(Math.random() * 360, 0, 1, 0)))))
+        }
 
         const sky_transform = Mat4.translation(...this.s.pos).times(Mat4.scale(600, 600, 600)).times(Mat4.identity())
         this.shapes.sky.draw(context, program_state, sky_transform, this.materials.sky)
